@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HabitGrow v9.0 - 캘린더형 커스텀 잔디 트래커</title>
+<title>HabitGrow v9.1 - 캘린더형 잔디 트래커 (연간 동기화 완벽판)</title>
 <style>
 /* ==================================================
-   Calendar System (v9.0)
+   Calendar System
 ================================================== */
 .month-navigation {
     display: flex; justify-content: center; align-items: center; gap: 20px; 
@@ -50,20 +50,26 @@
     background: repeating-linear-gradient(45deg, rgba(255,255,255,0.02), rgba(255,255,255,0.02) 4px, rgba(255,255,255,0.04) 4px, rgba(255,255,255,0.04) 8px);
 }
 
-/* 🖼️ 커스텀 잔디 이미지 스타일 */
-.custom-grass-img {
-    position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain;
-    z-index: 5; pointer-events: none; filter: drop-shadow(0 3px 3px rgba(0,0,0,0.2));
+/* 원래 사용하던 귀여운 이모지 잔디 스타일로 복구! 🌱 */
+.sprout-emoji {
+    position: absolute; inset: 0; display: flex; justify-content: center; align-items: center;
+    font-size: 24px; z-index: 5; pointer-events: none;
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)); transition: all 0.3s ease;
 }
-.custom-grass-img.animate-pop { animation: popSprout 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+.sprout-emoji.animate-pop { animation: popSprout 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
 @keyframes popSprout {
     0% { transform: scale(0.1) translateY(15px); opacity: 0; }
-    60% { transform: scale(1.2) translateY(-3px); opacity: 1; }
+    60% { transform: scale(1.3) translateY(-3px); opacity: 1; }
     100% { transform: scale(1) translateY(0); opacity: 1; }
 }
+.sprout-emoji.level1::before { content: "🌱"; }
+.sprout-emoji.level2::before { content: "🌿"; }
+.sprout-emoji.level3::before { content: "🌳"; }
+.sprout-emoji.level4::before { content: "🌲"; }
+.sprout-emoji.level5::before { content: "🌴"; }
 
 /* ==================================================
-   Yearly Tab System (365일 연간 대형 정원용)
+   Yearly Tab System (1년 달력 정원)
 ================================================== */
 .yearly-habit-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 18px; }
 .yearly-habit-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
@@ -77,7 +83,7 @@
 .yearly-cell:hover:not(.hidden) { transform: scale(1.3); z-index: 10; position: relative; cursor: default; }
 
 /* ==================================================
-   Tab Menu UI
+   Tab Menu UI & Misc
 ================================================== */
 .tabs-nav { display: flex; gap: 8px; margin-bottom: 22px; border-bottom: 2px solid var(--border); padding-bottom: 12px; }
 .tab-btn { background: none; border: none; color: var(--text-muted); font-size: 1rem; font-weight: bold; padding: 10px 20px; cursor: pointer; border-radius: 8px; transition: all 0.2s; }
@@ -87,9 +93,6 @@
 .tab-content { display: none; }
 .tab-content.active { display: block; }
 
-/* ==================================================
-   Badge System & Modals
-================================================== */
 .badge-board { background: var(--card-bg); border: 1px solid var(--border); padding: 15px 20px; border-radius: 14px; margin-bottom: 25px; display: flex; justify-content: space-around; }
 .badge-item { display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0.3; filter: grayscale(100%); transition: all 0.4s ease; text-align: center; }
 .badge-item.earned { opacity: 1; filter: grayscale(0%); transform: scale(1.1); }
@@ -104,16 +107,10 @@
 .modal button { margin-top:15px; padding:10px 20px; border-radius:8px; cursor:pointer; }
 .delete-modal { text-align: left; }
 
-/* ==================================================
-   Theme System
-================================================== */
 :root[data-theme="github"] { --bg-color:#0d1117; --card-bg:#161b22; --text-main:#c9d1d9; --text-muted:#8b949e; --border:#30363d; --primary:#2ea043; --primary-hover:#238636; }
 :root[data-theme="light"] { --bg-color:#f3f4f6; --card-bg:#ffffff; --text-main:#1f2937; --text-muted:#6b7280; --border:#e5e7eb; --primary:#3b82f6; --primary-hover:#2563eb; }
 :root[data-theme="pastel"] { --bg-color:#fffbeb; --card-bg:#ffffff; --text-main:#451a03; --text-muted:#78350f; --border:#fde68a; --primary:#f59e0b; --primary-hover:#d97706; }
 
-/* ==================================================
-   Reset & Layout
-================================================== */
 * { box-sizing:border-box; margin:0; padding:0; font-family: Pretendard, Apple SD Gothic Neo, sans-serif; }
 body { background: var(--bg-color); color: var(--text-main); min-height:100vh; padding:20px; transition:.3s; }
 button, input, select { font-family:inherit; }
@@ -123,9 +120,6 @@ header { display:flex; justify-content:space-between; align-items:center; paddin
 .logo p { margin-top:5px; color: var(--text-muted); font-size:.9rem; }
 .theme-selector select { padding:8px 12px; border-radius:8px; background: var(--card-bg); color: var(--text-main); border: 1px solid var(--border); }
 
-/* ==================================================
-   Add Habit & Cards 
-================================================== */
 .add-habit-form { display:flex; flex-direction:column; gap:15px; background: var(--card-bg); border: 1px solid var(--border); padding:20px; border-radius:14px; margin-bottom:25px; }
 .add-habit-row { display: flex; gap: 10px; }
 .add-habit-row input { flex:1; padding:12px; border-radius:8px; border: 1px solid var(--border); background: var(--bg-color); color: var(--text-main); outline:none; }
@@ -151,13 +145,9 @@ header { display:flex; justify-content:space-between; align-items:center; paddin
 .action-btns { display: flex; gap: 6px; }
 .delete-btn { color:#ef4444; background:none; border: 1px solid #ef4444; border-radius:6px; padding:6px 12px; cursor:pointer; font-size: 0.8rem; font-weight: bold;}
 .delete-btn:hover { background:#ef4444; color:white; }
-
 .stats { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
 .stat { background: var(--bg-color); border: 1px solid var(--border); padding:5px 10px; border-radius:20px; font-size:.8rem; }
 
-/* ==================================================
-  Mobile Responsive Layout
-================================================== */
 @media(max-width:600px){
     body { padding:12px; }
     header { flex-direction:column; align-items:flex-start; gap:15px; }
@@ -179,7 +169,7 @@ header { display:flex; justify-content:space-between; align-items:center; paddin
 <div class="container">
     <header>
         <div class="logo">
-            <h1>🌿 HabitGrow v9.0</h1>
+            <h1>🌿 HabitGrow v9.1</h1>
             <p id="today-text"></p>
         </div>
         <div class="theme-selector">
@@ -208,7 +198,7 @@ header { display:flex; justify-content:space-between; align-items:center; paddin
 
     <div class="tabs-nav">
         <button class="tab-btn active" id="tab-btn-daily" onclick="switchTab('daily')">📅 월간 달력 (캘린더)</button>
-        <button class="tab-btn" id="tab-btn-yearly" onclick="switchTab('yearly')">🗺️ 연간 대형 정원 (365일)</button>
+        <button class="tab-btn" id="tab-btn-yearly" onclick="switchTab('yearly')">🗺️ 연간 대형 정원</button>
     </div>
 
     <div id="tab-daily" class="tab-content active">
@@ -242,7 +232,7 @@ header { display:flex; justify-content:space-between; align-items:center; paddin
 
         <div class="month-navigation">
             <button class="month-btn" onclick="changeMonth(-1)">◀</button>
-            <div class="current-month-text" id="current-month-display">2026년 7월</div>
+            <div class="current-month-text" id="current-month-display"></div>
             <button class="month-btn" onclick="changeMonth(1)">▶</button>
         </div>
 
@@ -251,8 +241,8 @@ header { display:flex; justify-content:space-between; align-items:center; paddin
 
     <div id="tab-yearly" class="tab-content">
         <div style="margin-bottom: 20px;">
-            <h2 style="font-size: 1.5rem; display: flex; align-items: center; gap: 8px;">🗺️ 연간 대형 정원 (365일)</h2>
-            <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 5px;">올해 심은 습관 잔디밭을 한눈에 모아봅니다. (월간 달력과 연동됩니다!)</p>
+            <h2 id="yearly-tab-title" style="font-size: 1.5rem; display: flex; align-items: center; gap: 8px;">🗺️ 연간 대형 정원</h2>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 5px;">현재 달력의 연도를 기준으로 1년(1월 1일 ~ 12월 31일) 치 잔디밭을 조망합니다.</p>
         </div>
         <div id="yearly-habits-container" class="habits-container"></div>
     </div>
@@ -279,9 +269,6 @@ header { display:flex; justify-content:space-between; align-items:center; paddin
 </div>
 
 <script>
-// ==================================================
-// 🔊 Audio System (뾱!)
-// ==================================================
 const AudioContext = window.AudioContext || window.webkitAudioContext;
 let audioCtx;
 function playPopSound() {
@@ -300,9 +287,6 @@ function playPopSound() {
     oscillator.stop(audioCtx.currentTime + 0.1);
 }
 
-// ==================================================
-// 요일 선택기 로직
-// ==================================================
 document.querySelectorAll('.day-btn').forEach(btn => {
     btn.addEventListener('click', () => { btn.classList.toggle('active'); });
 });
@@ -311,9 +295,6 @@ function getSelectedDays() {
     return Array.from(activeBtns).map(btn => parseInt(btn.getAttribute('data-val')));
 }
 
-// ==================================================
-// Core Data System (v9.0)
-// ==================================================
 const STORAGE_KEY = "habitgrow_data_v9";
 let habits = loadData();
 let badges = JSON.parse(localStorage.getItem("habitgrow_badges")) || { tree: false, month: false, five: false };
@@ -340,10 +321,6 @@ function saveData(){
     localStorage.setItem("habitgrow_badges", JSON.stringify(badges));
 }
 
-// ==================================================
-// Date & Calendar System 
-// ==================================================
-// 현재 화면에 보여줄 달력의 기준 날짜 (기본값: 오늘)
 let currentDisplayDate = new Date();
 
 function getKSTDate(){
@@ -364,34 +341,29 @@ function getDayOfWeek(dateString) {
     const date = new Date(parts[0], parts[1] - 1, parts[2]); 
     return date.getDay();
 }
-function getLast30Days(){ // 통계용 (최근 30일)
+function getLast30Days(){ 
     const result=[]; const today = getKSTDate();
     for(let i=29; i>=0; i--){ result.push(addDays(today, -i)); }
     return result; 
 }
 
-// 월 변경 함수
 function changeMonth(offset) {
     currentDisplayDate.setMonth(currentDisplayDate.getMonth() + offset);
     renderAllViews();
 }
 
-// 특정 연/월의 달력 배열 생성 (빈칸은 null, 날짜는 YYYY-MM-DD)
 function getCalendarDays(year, month) {
     let firstDay = new Date(year, month, 1).getDay();
     let daysInMonth = new Date(year, month + 1, 0).getDate();
     let days = [];
     
-    for (let i = 0; i < firstDay; i++) days.push(null); // 시작 전 빈칸
+    for (let i = 0; i < firstDay; i++) days.push(null); 
     for (let i = 1; i <= daysInMonth; i++) {
         days.push(`${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`);
     }
     return days;
 }
 
-// ==================================================
-// Statistics
-// ==================================================
 function getCompletedCount(history){ return Object.values(history).filter(Boolean).length; }
 
 function calculateCurrentStreak(history, targetDays){
@@ -436,9 +408,23 @@ function calculateSuccessRate(history, targetDays){
     return Math.floor((checkedCount / targetCount) * 100);
 }
 
-// ==================================================
-// Badges Check
-// ==================================================
+function getStreakAtDate(history, dateStr, targetDays) {
+    let streak = 0; let current = dateStr;
+    for(let i=0; i<365; i++) {
+        if(!targetDays.includes(getDayOfWeek(current))) { current = addDays(current, -1); continue; }
+        if(history[current]){ streak++; current = addDays(current, -1); } else { break; }
+    }
+    return streak;
+}
+function getPlantLevel(history, dateStr, targetDays){
+    const streak = getStreakAtDate(history, dateStr, targetDays);
+    if(streak >= 7) return 5;
+    if(streak >= 5) return 4;
+    if(streak >= 3) return 3;
+    if(streak >= 2) return 2;
+    return 1;
+}
+
 function checkBadges(clickedDate) {
     let newlyEarned = null;
     if (!badges.tree) { if (habits.some(h => calculateBestStreak(h.history, h.targetDays) >= 3)) { badges.tree = true; newlyEarned = 'tree'; } }
@@ -455,9 +441,6 @@ function renderBadges() {
     if (badges.five) document.getElementById('badge-five').classList.add('earned');
 }
 
-// ==================================================
-// Habit Objects & UI Rendering
-// ==================================================
 function createHabit(title, targetDays){ return { id: Date.now().toString(), title, targetDays, history:{}, createdAt: getKSTDate() }; }
 const habitList = document.getElementById("habit-list");
 const habitInput = document.getElementById("habit-input");
@@ -503,27 +486,26 @@ function updateHabitCard(habitId, clickedDate) {
         if(!date || cell.classList.contains('disabled')) return;
         
         const isCompleted = habit.history[date];
-        const existingGrass = cell.querySelector('.custom-grass-img');
+        const existingPlant = cell.querySelector('.sprout-emoji');
         
         if (isCompleted) {
             cell.classList.add('completed');
-            if (!existingGrass) {
-                const img = document.createElement('img');
-                img.src = 'image_79089d.png'; // 🖼️ 커스텀 잔디 이미지 적용!
-                img.className = 'custom-grass-img';
-                if (date === clickedDate) img.classList.add('animate-pop');
-                cell.appendChild(img);
+            const targetClassName = `sprout-emoji level${getPlantLevel(habit.history, date, habit.targetDays)}`;
+            if (existingPlant) { 
+                existingPlant.className = targetClassName; 
+            } else {
+                const plant = document.createElement('div');
+                plant.className = targetClassName;
+                if (date === clickedDate) plant.classList.add('animate-pop');
+                cell.appendChild(plant);
             }
         } else {
             cell.classList.remove('completed');
-            if (existingGrass) existingGrass.remove();
+            if (existingPlant) existingPlant.remove();
         }
     });
 }
 
-// ==================================================
-// Tab Switcher
-// ==================================================
 function switchTab(tabId) {
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
@@ -538,13 +520,10 @@ function switchTab(tabId) {
     }
 }
 
-// ==================================================
-// Full Render (월간 달력 렌더러)
-// ==================================================
+// 📅 월간 달력 렌더러
 function renderFull(){
     habitList.innerHTML="";
     
-    // 달력 상단 년/월 텍스트 업데이트
     const year = currentDisplayDate.getFullYear();
     const month = currentDisplayDate.getMonth();
     document.getElementById('current-month-display').innerText = `${year}년 ${month + 1}월`;
@@ -601,7 +580,7 @@ function renderFull(){
             } else {
                 cell.setAttribute("data-date", date);
                 const dayNum = parseInt(date.split('-')[2], 10);
-                cell.innerText = dayNum; // 기본 날짜 숫자 표시
+                cell.innerText = dayNum; 
                 
                 if(!habit.targetDays.includes(getDayOfWeek(date))) {
                     cell.classList.add("disabled"); 
@@ -609,10 +588,9 @@ function renderFull(){
                 } else {
                     if(habit.history[date]){
                         cell.classList.add("completed");
-                        const img = document.createElement('img');
-                        img.src = 'image_79089d.png'; // 🖼️ 커스텀 잔디 이미지 렌더링
-                        img.className = 'custom-grass-img';
-                        cell.appendChild(img);
+                        const plant = document.createElement("div");
+                        plant.className = `sprout-emoji level${getPlantLevel(habit.history, date, habit.targetDays)}`;
+                        cell.appendChild(plant);
                     }
                     cell.title = date;
                     cell.addEventListener("click", ()=>toggleDay(habit.id, date));
@@ -624,17 +602,22 @@ function renderFull(){
     });
 }
 
-// ==================================================
-// 365일 대형 정원 탭 렌더러
-// ==================================================
+// 🗺️ 완벽하게 수정된 연간 대형 정원 렌더러
 function renderYearlyTab() {
     const container = document.getElementById("yearly-habits-container");
     container.innerHTML = "";
     if(habits.length === 0) return;
     
-    const today = getKSTDate();
-    const startDate = addDays(today, -364);
-    const startDayOfWeek = getDayOfWeek(startDate);
+    // 현재 달력에 선택된 '연도'를 기준으로 1년 치(1월 1일 ~ 12월 31일)를 그립니다!
+    const year = currentDisplayDate.getFullYear();
+    document.getElementById('yearly-tab-title').innerHTML = `🗺️ ${year}년 연간 대형 정원`;
+    
+    const startDateStr = `${year}-01-01`;
+    const startDayOfWeek = getDayOfWeek(startDateStr);
+    
+    // 윤년(Leap year) 계산
+    const isLeapYear = (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+    const daysInYear = isLeapYear ? 366 : 365;
     
     habits.forEach(habit => {
         const card = document.createElement("div");
@@ -652,27 +635,35 @@ function renderYearlyTab() {
         `;
         
         const grid = card.querySelector(".yearly-grid");
+        
+        // 1월 1일의 요일을 맞추기 위해 앞부분 빈칸 채우기
         for(let i = 0; i < startDayOfWeek; i++) {
             const emptyCell = document.createElement('div');
             emptyCell.className = 'yearly-cell hidden';
             grid.appendChild(emptyCell);
         }
         
-        let currentDate = startDate;
-        for(let i = 0; i <= 364; i++) {
+        // 정확히 그 해의 365일(또는 366일) 그리기
+        let currentDate = startDateStr;
+        for(let i = 0; i < daysInYear; i++) {
             const cell = document.createElement('div');
             cell.className = 'yearly-cell';
             cell.title = currentDate;
+            
             const dayOfWeek = getDayOfWeek(currentDate);
             if(!habit.targetDays.includes(dayOfWeek)) {
                 cell.classList.add('disabled');
             } else if(habit.history[currentDate]) {
                 cell.classList.add('completed');
             }
+            
             grid.appendChild(cell);
             currentDate = addDays(currentDate, 1);
         }
+        
         container.appendChild(card);
+        
+        // 오늘이 포함된 해라면 오늘 날짜 근처로, 아니라면 맨 오른쪽으로 스크롤
         setTimeout(() => {
             const scrollContainer = document.getElementById(`yearly-scroll-${habit.id}`);
             if(scrollContainer) scrollContainer.scrollLeft = scrollContainer.scrollWidth;
@@ -687,9 +678,6 @@ function renderAllViews() {
     }
 }
 
-// ==================================================
-// Modals & Utilities
-// ==================================================
 let deleteTarget=null;
 function deleteHabit(id){ deleteTarget=id; document.getElementById("delete-modal").style.display="flex"; }
 function confirmDelete(){ habits = habits.filter(h=>h.id!==deleteTarget); saveData(); closeDeleteModal(); renderAllViews(); }
@@ -726,7 +714,8 @@ function updateHabitsOrder() {
     currentCards.forEach(card => {
         const id = card.getAttribute('data-id'); const habit = habits.find(h => h.id === id); if(habit) reorderedHabits.push(habit);
     });
-    habits = reorderedHabits; saveData(); renderYearlyTab();
+    habits = reorderedHabits; saveData(); 
+    if(document.getElementById('tab-yearly').classList.contains('active')) renderYearlyTab();
 }
 
 function getTargetDaysText(daysArray) {
@@ -737,7 +726,6 @@ function getTargetDaysText(daysArray) {
 }
 function escapeHTML(str){ return str.replace(/[&<>"']/g, char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"})[char]); }
 
-// Theme
 const themeSelect = document.getElementById("theme-select");
 themeSelect.addEventListener("change", ()=>{
     const theme = themeSelect.value; document.documentElement.setAttribute("data-theme", theme); localStorage.setItem("habitgrow_theme", theme);
@@ -746,7 +734,6 @@ function loadTheme(){
     const theme = localStorage.getItem("habitgrow_theme") || "github"; document.documentElement.setAttribute("data-theme", theme); themeSelect.value=theme;
 }
 
-// Backup / Restore
 function exportData(){
     const blob = new Blob([JSON.stringify(habits, null, 2)], {type: "application/json"}); const url = URL.createObjectURL(blob);
     const a = document.createElement("a"); a.href=url; a.download="HabitGrow_backup.json"; a.click(); URL.revokeObjectURL(url);
@@ -759,7 +746,6 @@ function importData(event){
     reader.readAsText(file);
 }
 
-// Init
 function init(){
     document.getElementById("today-text").textContent = `오늘은 ${getKSTDate()} 입니다. 나만의 정원을 키워보세요 🌱`;
     loadTheme(); setupDragAndDrop(); renderAllViews(); renderBadges(); 
