@@ -3,13 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HabitGrow v4.2 - 완벽한 개별 애니메이션 & 통계 트래커</title>
+<title>HabitGrow v5.0 - 배지 시스템 트래커</title>
 <style>
 /* ==================================================
    Growing Grass System
 ================================================== */
-
-/* 빈 땅 (입체감 추가) */
 .day-cell { 
     aspect-ratio: 1; 
     position: relative; 
@@ -20,46 +18,21 @@
     box-shadow: inset 0 2px 4px rgba(0,0,0,0.15); 
 }
 .day-cell:hover { transform: translateY(-2px); }
+.day-cell.completed { background: transparent; box-shadow: none; }
 
-/* 심어진 땅 */
-.day-cell.completed {
-    background: transparent;
-    box-shadow: none;
-}
-
-/* 🌿 식물 이모지 공통 스타일 */
 .sprout-emoji {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 24px;
-    z-index: 5;
-    pointer-events: none;
-    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3));
-    transition: all 0.3s ease;
+    position: absolute; inset: 0; display: flex; justify-content: center; align-items: center;
+    font-size: 24px; z-index: 5; pointer-events: none;
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)); transition: all 0.3s ease;
 }
 
-/* 🎯 방금 클릭한 칸에만 적용될 팝(Pop) 애니메이션 */
-.sprout-emoji.animate-pop {
-    animation: popSprout 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
+.sprout-emoji.animate-pop { animation: popSprout 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
 @keyframes popSprout {
     0% { transform: scale(0.1) translateY(15px); opacity: 0; }
     60% { transform: scale(1.3) translateY(-3px); opacity: 1; }
     100% { transform: scale(1) translateY(0); opacity: 1; }
 }
 
-/* ==================================================
-   Plant Levels
-   1일: 새싹 (🌱)
-   2일: 잔디 (🌿)
-   3~4일: 나무 (🌳)
-   5~6일: 소나무 (🌲)
-   7일 이상: 야자수 (🌴)
-================================================== */
 .sprout-emoji.level1::before { content: "🌱"; }
 .sprout-emoji.level2::before { content: "🌿"; }
 .sprout-emoji.level3::before { content: "🌳"; }
@@ -67,11 +40,38 @@
 .sprout-emoji.level5::before { content: "🌴"; }
 
 /* ==================================================
+   Badge System UI
+================================================== */
+.badge-board {
+    background: var(--card-bg); border: 1px solid var(--border); padding: 15px 20px;
+    border-radius: 14px; margin-bottom: 25px; display: flex; justify-content: space-around;
+}
+.badge-item {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    opacity: 0.3; filter: grayscale(100%); transition: all 0.4s ease; text-align: center;
+}
+.badge-item.earned {
+    opacity: 1; filter: grayscale(0%); transform: scale(1.1);
+}
+.badge-icon { font-size: 2.2rem; margin-bottom: 5px; }
+.badge-name { font-size: 0.85rem; font-weight: bold; color: var(--text-muted); }
+.badge-item.earned .badge-name { color: var(--primary); }
+
+/* 축하 팝업 애니메이션 */
+@keyframes badgeUnlock {
+    0% { transform: scale(0.5) rotate(-10deg); opacity: 0; }
+    50% { transform: scale(1.2) rotate(10deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+.modal-badge-icon { font-size: 4rem; animation: badgeUnlock 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); margin-bottom: 10px; }
+
+/* ==================================================
    Modal 준비
 ================================================== */
 .modal-backdrop { display:none; position:fixed; inset:0; background: rgba(0,0,0,.5); align-items:center; justify-content:center; z-index:1000; }
-.modal { background: var(--card-bg); color: var(--text-main); padding:25px; border-radius:15px; width:90%; max-width:400px; }
+.modal { background: var(--card-bg); color: var(--text-main); padding:25px; border-radius:15px; width:90%; max-width:400px; text-align: center; }
 .modal button { margin-top:15px; padding:10px 20px; border-radius:8px; cursor:pointer; }
+.delete-modal { text-align: left; }
 
 /* ==================================================
    Theme System
@@ -86,9 +86,8 @@
 * { box-sizing:border-box; margin:0; padding:0; font-family: Pretendard, Apple SD Gothic Neo, sans-serif; }
 body { background: var(--bg-color); color: var(--text-main); min-height:100vh; padding:20px; transition:.3s; }
 button, input, select { font-family:inherit; }
-
 .container { width:100%; max-width:900px; margin:auto; }
-header { display:flex; justify-content:space-between; align-items:center; padding-bottom:20px; margin-bottom:25px; border-bottom: 1px solid var(--border); }
+header { display:flex; justify-content:space-between; align-items:center; padding-bottom:20px; margin-bottom:20px; border-bottom: 1px solid var(--border); }
 .logo h1 { font-size:2rem; }
 .logo p { margin-top:5px; color: var(--text-muted); font-size:.9rem; }
 .theme-selector select { padding:8px 12px; border-radius:8px; background: var(--card-bg); color: var(--text-main); border: 1px solid var(--border); }
@@ -129,6 +128,8 @@ header { display:flex; justify-content:space-between; align-items:center; paddin
     .grass-grid { grid-template-columns: repeat(15,1fr); gap:4px; }
     .habit-card { padding:15px; }
     .sprout-emoji { font-size: 18px; } 
+    .badge-board { padding: 10px; }
+    .badge-icon { font-size: 1.8rem; }
 }
 </style>
 </head>
@@ -137,7 +138,7 @@ header { display:flex; justify-content:space-between; align-items:center; paddin
 <div class="container">
     <header>
         <div class="logo">
-            <h1>🌿 HabitGrow v4.2</h1>
+            <h1>🌿 HabitGrow v5.0</h1>
             <p id="today-text"></p>
         </div>
         <div class="theme-selector">
@@ -149,8 +150,23 @@ header { display:flex; justify-content:space-between; align-items:center; paddin
         </div>
     </header>
 
+    <div class="badge-board" id="badge-board">
+        <div class="badge-item" id="badge-tree">
+            <div class="badge-icon">🌳</div>
+            <div class="badge-name">첫 나무 달성</div>
+        </div>
+        <div class="badge-item" id="badge-month">
+            <div class="badge-icon">🔥</div>
+            <div class="badge-name">30일 연속</div>
+        </div>
+        <div class="badge-item" id="badge-five">
+            <div class="badge-icon">🖐️</div>
+            <div class="badge-name">습관 5개 동시</div>
+        </div>
+    </div>
+
     <div class="add-habit-form">
-        <input id="habit-input" maxlength="50" placeholder="예: 물 2L 마시기, 운동하기">
+        <input id="habit-input" maxlength="50" placeholder="예: 물 2L 마시기 (습관 5개를 만들어보세요!)">
         <button class="primary-btn" id="add-btn">추가하기</button>
     </div>
 
@@ -164,12 +180,23 @@ header { display:flex; justify-content:space-between; align-items:center; paddin
 
     <div id="habit-list" class="habits-container"></div>
 
-    <div class="modal-backdrop">
-        <div class="modal">
+    <div class="modal-backdrop" id="delete-modal">
+        <div class="modal delete-modal">
             <h3>정말 삭제할까요?</h3>
-            <p>삭제하면 해당 습관 기록도 사라집니다.</p>
-            <button onclick="confirmDelete()">삭제</button>
-            <button onclick="closeModal()">취소</button>
+            <p style="margin-top: 5px; color: var(--text-muted);">삭제하면 해당 습관 기록도 사라집니다.</p>
+            <div style="text-align: right;">
+                <button style="background: none; border: 1px solid #ef4444; color: #ef4444;" onclick="closeDeleteModal()">취소</button>
+                <button class="primary-btn" style="background: #ef4444; color: white;" onclick="confirmDelete()">삭제</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-backdrop" id="badge-modal">
+        <div class="modal">
+            <div class="modal-badge-icon" id="badge-modal-icon">🏆</div>
+            <h2 id="badge-modal-title" style="margin-bottom: 10px; color: var(--primary);">새로운 배지 획득!</h2>
+            <p id="badge-modal-desc" style="margin-bottom: 20px; color: var(--text-muted);">조건을 달성하셨습니다.</p>
+            <button class="primary-btn" onclick="closeBadgeModal()" style="width: 100%;">멋지다! (확인)</button>
         </div>
     </div>
 </div>
@@ -178,21 +205,27 @@ header { display:flex; justify-content:space-between; align-items:center; paddin
 // ==================================================
 // Core Data System
 // ==================================================
-const STORAGE_KEY = "habitgrow_data_v4";
+const STORAGE_KEY = "habitgrow_data_v5";
 let habits = loadData();
+let badges = JSON.parse(localStorage.getItem("habitgrow_badges")) || { tree: false, month: false, five: false };
+
+const BADGE_INFO = {
+    tree: { icon: '🌳', title: '첫 나무 달성!', desc: '대단해요! 하나의 습관을 3일 연속 달성했습니다.' },
+    month: { icon: '🔥', title: '30일 연속 달성!', desc: '엄청난 끈기입니다! 한 달 동안 꾸준히 달성하셨네요.' },
+    five: { icon: '🖐️', title: '습관 5개 마스터!', desc: '하루에 무려 5개의 습관을 동시에 완료하셨습니다.' }
+};
 
 function loadData(){
     try {
-        const data = localStorage.getItem(STORAGE_KEY) || localStorage.getItem("habitgrow_data_v2") || localStorage.getItem("habitgrow_data");
+        const data = localStorage.getItem(STORAGE_KEY) || localStorage.getItem("habitgrow_data_v4") || localStorage.getItem("habitgrow_data");
         if(data) return JSON.parse(data);
         return [];
-    } catch(error){
-        return [];
-    }
+    } catch(error){ return []; }
 }
 
 function saveData(){
     localStorage.setItem(STORAGE_KEY, JSON.stringify(habits));
+    localStorage.setItem("habitgrow_badges", JSON.stringify(badges));
 }
 
 // ==================================================
@@ -207,7 +240,6 @@ function addDays(dateString, amount){
     const parts = dateString.split('-');
     const date = new Date(parts[0], parts[1] - 1, parts[2]); 
     date.setDate(date.getDate() + amount);
-    
     const yy = date.getFullYear();
     const mm = String(date.getMonth() + 1).padStart(2, '0');
     const dd = String(date.getDate()).padStart(2, '0');
@@ -217,9 +249,7 @@ function addDays(dateString, amount){
 function getLast30Days(){
     const result=[];
     const today = getKSTDate();
-    for(let i=29; i>=0; i--){
-        result.push(addDays(today, -i));
-    }
+    for(let i=29; i>=0; i--){ result.push(addDays(today, -i)); }
     return result; 
 }
 
@@ -229,13 +259,9 @@ function getLast30Days(){
 function getCompletedCount(history){ return Object.values(history).filter(Boolean).length; }
 
 function calculateCurrentStreak(history){
-    let streak = 0;
-    let current = getKSTDate();
+    let streak = 0; let current = getKSTDate();
     if(!history[current]) current = addDays(current, -1);
-    while(history[current]){
-        streak++;
-        current = addDays(current, -1);
-    }
+    while(history[current]){ streak++; current = addDays(current, -1); }
     return streak;
 }
 
@@ -243,42 +269,26 @@ function calculateBestStreak(history){
     const dates = Object.keys(history).filter(d=>history[d]).sort();
     let best=0, current=0, previous=null;
     dates.forEach(date=>{
-        if(previous && addDays(previous, 1)===date) { current++; }
-        else { current=1; }
+        if(previous && addDays(previous, 1)===date) { current++; } else { current=1; }
         if(current>best) best=current;
         previous=date;
     });
     return best;
 }
 
-// 🐛 버그 수정 완료: 무조건 화면에 보이는 30칸을 기준으로 계산합니다!
 function calculateSuccessRate(history){
-    const totalBoxes = 30; // 무조건 30칸 기준
-    const dates = getLast30Days(); 
-    let checkedCount = 0;
-    
-    // 화면에 보이는 30개의 날짜 중 체크된 칸이 몇 개인지 세어줍니다.
-    dates.forEach(date => {
-        if(history[date] === true) {
-            checkedCount++;
-        }
-    });
-    
-    // 예: 1칸 체크 시 (1 / 30) * 100 = 3.333... -> 3%
+    const dates = getLast30Days(); let checkedCount = 0;
+    dates.forEach(date => { if(history[date]) checkedCount++; });
     if (checkedCount === 0) return 0;
-    return Math.floor((checkedCount / totalBoxes) * 100);
+    return Math.floor((checkedCount / 30) * 100);
 }
 
 // ==================================================
-// Plant Growth 
+// Plant Growth & Badges Check
 // ==================================================
 function getStreakAtDate(history, dateStr) {
-    let streak = 0;
-    let current = dateStr;
-    while(history[current]) {
-        streak++;
-        current = addDays(current, -1);
-    }
+    let streak = 0; let current = dateStr;
+    while(history[current]) { streak++; current = addDays(current, -1); }
     return streak;
 }
 
@@ -291,12 +301,47 @@ function getPlantLevel(history, dateStr){
     return 1;
 }
 
+// 🏆 새로운 배지 시스템 로직!
+function checkBadges(clickedDate) {
+    let newlyEarned = null;
+
+    // 1. 첫 나무 달성 (3일 연속)
+    if (!badges.tree) {
+        if (habits.some(h => calculateBestStreak(h.history) >= 3)) {
+            badges.tree = true; newlyEarned = 'tree';
+        }
+    }
+    // 2. 30일 연속 달성
+    if (!badges.month) {
+        if (habits.some(h => calculateBestStreak(h.history) >= 30)) {
+            badges.month = true; newlyEarned = 'month';
+        }
+    }
+    // 3. 습관 5개 동시 달성 (클릭한 날짜에 완료된 습관이 5개 이상인지)
+    if (!badges.five) {
+        let completedToday = habits.filter(h => h.history[clickedDate]).length;
+        if (completedToday >= 5) {
+            badges.five = true; newlyEarned = 'five';
+        }
+    }
+
+    if (newlyEarned) {
+        saveData(); // 배지 상태 저장
+        renderBadges(); // 화면 배지 업데이트
+        showBadgeModal(newlyEarned); // 축하 팝업 띄우기
+    }
+}
+
+function renderBadges() {
+    if (badges.tree) document.getElementById('badge-tree').classList.add('earned');
+    if (badges.month) document.getElementById('badge-month').classList.add('earned');
+    if (badges.five) document.getElementById('badge-five').classList.add('earned');
+}
+
 // ==================================================
 // Habit Objects & UI
 // ==================================================
-function createHabit(title){
-    return { id: Date.now().toString(), title, history:{}, createdAt: getKSTDate() };
-}
+function createHabit(title){ return { id: Date.now().toString(), title, history:{}, createdAt: getKSTDate() }; }
 
 const habitList = document.getElementById("habit-list");
 const habitInput = document.getElementById("habit-input");
@@ -314,9 +359,6 @@ function addHabit(){
     renderFull(); 
 }
 
-// ==================================================
-// Toggle Day
-// ==================================================
 function toggleDay(habitId, date){
     const habit = habits.find(h=>h.id===habitId);
     if(!habit) return;
@@ -326,6 +368,7 @@ function toggleDay(habitId, date){
     saveData();
     
     updateHabitCard(habitId, date);
+    checkBadges(date); // 체크할 때마다 배지 획득 조건 검사!
 }
 
 function updateHabitCard(habitId, clickedDate) {
@@ -333,16 +376,10 @@ function updateHabitCard(habitId, clickedDate) {
     const card = document.querySelector(`.habit-card[data-id="${habitId}"]`);
     if(!card) return;
 
-    const current = calculateCurrentStreak(habit.history);
-    const best = calculateBestStreak(habit.history);
-    const total = getCompletedCount(habit.history);
-    const rate = calculateSuccessRate(habit.history);
-
-    card.querySelector('.stat-current').innerText = `🔥 ${current}일 연속`;
-    card.querySelector('.stat-best').innerText = `🏆 최장 ${best}일`;
-    card.querySelector('.stat-total').innerText = `🌱 총 ${total}회`;
-    // 새로 계산된 달성률(%) 텍스트 렌더링
-    card.querySelector('.stat-rate').innerText = `📈 달성률 ${rate}%`;
+    card.querySelector('.stat-current').innerText = `🔥 ${calculateCurrentStreak(habit.history)}일 연속`;
+    card.querySelector('.stat-best').innerText = `🏆 최장 ${calculateBestStreak(habit.history)}일`;
+    card.querySelector('.stat-total').innerText = `🌱 총 ${getCompletedCount(habit.history)}회`;
+    card.querySelector('.stat-rate').innerText = `📈 달성률 ${calculateSuccessRate(habit.history)}%`;
 
     const cells = card.querySelectorAll('.day-cell');
     cells.forEach(cell => {
@@ -352,24 +389,17 @@ function updateHabitCard(habitId, clickedDate) {
 
         if (isCompleted) {
             cell.classList.add('completed');
-            const level = getPlantLevel(habit.history, date);
-            const targetClassName = `sprout-emoji level${level}`;
-
-            if (existingPlant) {
-                existingPlant.className = targetClassName;
-            } else {
+            const targetClassName = `sprout-emoji level${getPlantLevel(habit.history, date)}`;
+            if (existingPlant) { existingPlant.className = targetClassName; } 
+            else {
                 const plant = document.createElement('div');
                 plant.className = targetClassName;
-                if (date === clickedDate) {
-                    plant.classList.add('animate-pop');
-                }
+                if (date === clickedDate) plant.classList.add('animate-pop');
                 cell.appendChild(plant);
             }
         } else {
             cell.classList.remove('completed');
-            if (existingPlant) {
-                existingPlant.remove();
-            }
+            if (existingPlant) existingPlant.remove();
         }
     });
 }
@@ -380,19 +410,25 @@ function updateHabitCard(habitId, clickedDate) {
 let deleteTarget=null;
 function deleteHabit(id){
     deleteTarget=id;
-    const modal = document.querySelector(".modal-backdrop");
-    if(modal) modal.style.display="flex";
+    document.getElementById("delete-modal").style.display="flex";
 }
 function confirmDelete(){
     habits = habits.filter(h=>h.id!==deleteTarget);
     saveData();
-    closeModal();
+    closeDeleteModal();
     renderFull();
 }
-function closeModal(){
-    const modal = document.querySelector(".modal-backdrop");
-    if(modal) modal.style.display="none";
+function closeDeleteModal(){ document.getElementById("delete-modal").style.display="none"; }
+
+// 🏆 배지 모달 함수
+function showBadgeModal(badgeId) {
+    const info = BADGE_INFO[badgeId];
+    document.getElementById('badge-modal-icon').innerText = info.icon;
+    document.getElementById('badge-modal-title').innerText = info.title;
+    document.getElementById('badge-modal-desc').innerText = info.desc;
+    document.getElementById("badge-modal").style.display="flex";
 }
+function closeBadgeModal(){ document.getElementById("badge-modal").style.display="none"; }
 
 // ==================================================
 // Full Render
@@ -403,62 +439,45 @@ function renderFull(){
         habitList.innerHTML=`<div class="habit-card" style="text-align:center; padding:40px;"><h3 style="margin-bottom:10px;">🌱 아직 심은 습관이 없습니다.</h3><p style="color:var(--text-muted);">새로운 습관을 추가해서 나만의 정원을 만들어보세요.</p></div>`;
         return;
     }
-
     const dates = getLast30Days();
-
     habits.forEach(habit=>{
         const card = document.createElement("div");
-        card.className="habit-card";
-        card.setAttribute("data-id", habit.id); 
+        card.className="habit-card"; card.setAttribute("data-id", habit.id); 
         
-        const current = calculateCurrentStreak(habit.history);
-        const best = calculateBestStreak(habit.history);
-        const total = getCompletedCount(habit.history);
-        const rate = calculateSuccessRate(habit.history);
-
         card.innerHTML=`
         <div class="habit-header">
             <div>
                 <div class="habit-title">${escapeHTML(habit.title)}</div>
                 <div class="stats">
-                    <div class="stat stat-current">🔥 ${current}일 연속</div>
-                    <div class="stat stat-best">🏆 최장 ${best}일</div>
-                    <div class="stat stat-total">🌱 총 ${total}회</div>
-                    <div class="stat stat-rate">📈 달성률 ${rate}%</div>
+                    <div class="stat stat-current">🔥 ${calculateCurrentStreak(habit.history)}일 연속</div>
+                    <div class="stat stat-best">🏆 최장 ${calculateBestStreak(habit.history)}일</div>
+                    <div class="stat stat-total">🌱 총 ${getCompletedCount(habit.history)}회</div>
+                    <div class="stat stat-rate">📈 달성률 ${calculateSuccessRate(habit.history)}%</div>
                 </div>
             </div>
             <button class="delete-btn" onclick="deleteHabit('${habit.id}')">삭제</button>
         </div>
         <div class="grass-grid"></div>
         `;
-
         const grid = card.querySelector(".grass-grid");
-        
         dates.forEach(date=>{
             const cell = document.createElement("div");
-            cell.className="day-cell";
-            cell.setAttribute("data-date", date);
+            cell.className="day-cell"; cell.setAttribute("data-date", date);
             
             if(habit.history[date]){
                 cell.classList.add("completed");
-                const level = getPlantLevel(habit.history, date);
                 const plant = document.createElement("div");
-                plant.className = `sprout-emoji level${level}`;
+                plant.className = `sprout-emoji level${getPlantLevel(habit.history, date)}`;
                 cell.appendChild(plant);
             }
-            
             cell.title=date;
             cell.addEventListener("click", ()=>toggleDay(habit.id, date));
             grid.appendChild(cell);
         });
-
         habitList.appendChild(card);
     });
 }
-
-function escapeHTML(str){
-    return str.replace(/[&<>"']/g, char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"})[char]);
-}
+function escapeHTML(str){ return str.replace(/[&<>"']/g, char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"})[char]); }
 
 // ==================================================
 // Theme Management
@@ -469,7 +488,6 @@ themeSelect.addEventListener("change", ()=>{
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem("habitgrow_theme", theme);
 });
-
 function loadTheme(){
     const theme = localStorage.getItem("habitgrow_theme") || "github";
     document.documentElement.setAttribute("data-theme", theme);
@@ -482,29 +500,17 @@ function loadTheme(){
 function exportData(){
     const blob = new Blob([JSON.stringify(habits, null, 2)], {type: "application/json"});
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href=url;
-    a.download="HabitGrow_backup.json";
-    a.click();
+    const a = document.createElement("a"); a.href=url; a.download="HabitGrow_backup.json"; a.click();
     URL.revokeObjectURL(url);
 }
-
 function importData(event){
-    const file = event.target.files[0];
-    if(!file) return;
+    const file = event.target.files[0]; if(!file) return;
     const reader = new FileReader();
     reader.onload = function(e){
         try{
             const data = JSON.parse(e.target.result);
-            if(Array.isArray(data)){
-                habits=data;
-                saveData();
-                renderFull();
-                alert("복원이 완료되었습니다.");
-            }
-        }catch(error){
-            alert("올바른 백업 파일이 아닙니다.");
-        }
+            if(Array.isArray(data)){ habits=data; saveData(); renderFull(); renderBadges(); alert("복원이 완료되었습니다."); }
+        }catch(error){ alert("올바른 백업 파일이 아닙니다."); }
     };
     reader.readAsText(file);
 }
@@ -516,8 +522,8 @@ function init(){
     document.getElementById("today-text").textContent = `오늘은 ${getKSTDate()} 입니다. 나만의 정원을 키워보세요 🌱`;
     loadTheme();
     renderFull(); 
+    renderBadges(); // 저장된 배지 상태 불러오기
 }
-
 init();
 </script>
 </body>
