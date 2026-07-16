@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HabitGrow v9.1 - 캘린더형 잔디 트래커 (연간 동기화 완벽판)</title>
+<title>HabitGrow v9.2 - 캘린더형 잔디 트래커 (이모지 렌더링 완벽판)</title>
 <style>
 /* ==================================================
    Calendar System
@@ -39,7 +39,7 @@
 }
 .day-cell:hover { transform: translateY(-2px); }
 .day-cell.empty { background: transparent; box-shadow: none; cursor: default; pointer-events: none; }
-.day-cell.completed { background: transparent; box-shadow: none; color: transparent; }
+.day-cell.completed { background: transparent; box-shadow: none; color: transparent; } /* 날짜 숫자만 투명하게 */
 
 /* 휴일(목표 요일 아님) 스타일 */
 .day-cell.disabled {
@@ -50,10 +50,11 @@
     background: repeating-linear-gradient(45deg, rgba(255,255,255,0.02), rgba(255,255,255,0.02) 4px, rgba(255,255,255,0.04) 4px, rgba(255,255,255,0.04) 8px);
 }
 
-/* 원래 사용하던 귀여운 이모지 잔디 스타일로 복구! 🌱 */
+/* 이모지 잔디 스타일 (색상 초기화 추가로 투명화 방지) */
 .sprout-emoji {
     position: absolute; inset: 0; display: flex; justify-content: center; align-items: center;
     font-size: 24px; z-index: 5; pointer-events: none;
+    color: initial; /* 부모의 투명도 설정을 무시하고 이모지 고유 색상 유지 */
     filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)); transition: all 0.3s ease;
 }
 .sprout-emoji.animate-pop { animation: popSprout 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
@@ -62,11 +63,6 @@
     60% { transform: scale(1.3) translateY(-3px); opacity: 1; }
     100% { transform: scale(1) translateY(0); opacity: 1; }
 }
-.sprout-emoji.level1::before { content: "🌱"; }
-.sprout-emoji.level2::before { content: "🌿"; }
-.sprout-emoji.level3::before { content: "🌳"; }
-.sprout-emoji.level4::before { content: "🌲"; }
-.sprout-emoji.level5::before { content: "🌴"; }
 
 /* ==================================================
    Yearly Tab System (1년 달력 정원)
@@ -169,7 +165,7 @@ header { display:flex; justify-content:space-between; align-items:center; paddin
 <div class="container">
     <header>
         <div class="logo">
-            <h1>🌿 HabitGrow v9.1</h1>
+            <h1>🌿 HabitGrow v9.2</h1>
             <p id="today-text"></p>
         </div>
         <div class="theme-selector">
@@ -201,6 +197,7 @@ header { display:flex; justify-content:space-between; align-items:center; paddin
         <button class="tab-btn" id="tab-btn-yearly" onclick="switchTab('yearly')">🗺️ 연간 대형 정원</button>
     </div>
 
+    <!-- 탭 1: 월간 달력 (Calendar View) -->
     <div id="tab-daily" class="tab-content active">
         <div class="add-habit-form">
             <div class="add-habit-row">
@@ -239,6 +236,7 @@ header { display:flex; justify-content:space-between; align-items:center; paddin
         <div id="habit-list" class="habits-container"></div>
     </div>
 
+    <!-- 탭 2: 연간 대형 정원 -->
     <div id="tab-yearly" class="tab-content">
         <div style="margin-bottom: 20px;">
             <h2 id="yearly-tab-title" style="font-size: 1.5rem; display: flex; align-items: center; gap: 8px;">🗺️ 연간 대형 정원</h2>
@@ -304,6 +302,8 @@ const BADGE_INFO = {
     month: { icon: '🔥', title: '30일 연속 달성!', desc: '엄청난 끈기입니다! 30일 동안 꾸준히 달성하셨네요.' },
     five: { icon: '🖐️', title: '습관 5개 마스터!', desc: '하루에 무려 5개의 습관을 완료하셨습니다.' }
 };
+
+const PLANT_EMOJIS = { 1: '🌱', 2: '🌿', 3: '🌳', 4: '🌲', 5: '🌴' };
 
 function loadData(){
     try {
@@ -490,12 +490,15 @@ function updateHabitCard(habitId, clickedDate) {
         
         if (isCompleted) {
             cell.classList.add('completed');
-            const targetClassName = `sprout-emoji level${getPlantLevel(habit.history, date, habit.targetDays)}`;
+            const level = getPlantLevel(habit.history, date, habit.targetDays);
+            const currentEmoji = PLANT_EMOJIS[level]; // 자바스크립트로 직접 이모지 가져오기
+            
             if (existingPlant) { 
-                existingPlant.className = targetClassName; 
+                existingPlant.innerText = currentEmoji;
             } else {
                 const plant = document.createElement('div');
-                plant.className = targetClassName;
+                plant.className = 'sprout-emoji';
+                plant.innerText = currentEmoji;
                 if (date === clickedDate) plant.classList.add('animate-pop');
                 cell.appendChild(plant);
             }
@@ -589,7 +592,9 @@ function renderFull(){
                     if(habit.history[date]){
                         cell.classList.add("completed");
                         const plant = document.createElement("div");
-                        plant.className = `sprout-emoji level${getPlantLevel(habit.history, date, habit.targetDays)}`;
+                        plant.className = "sprout-emoji";
+                        const level = getPlantLevel(habit.history, date, habit.targetDays);
+                        plant.innerText = PLANT_EMOJIS[level]; // 자바스크립트로 직접 이모지 텍스트 추가!
                         cell.appendChild(plant);
                     }
                     cell.title = date;
@@ -602,20 +607,18 @@ function renderFull(){
     });
 }
 
-// 🗺️ 완벽하게 수정된 연간 대형 정원 렌더러
+// 🗺️ 연간 대형 정원 렌더러
 function renderYearlyTab() {
     const container = document.getElementById("yearly-habits-container");
     container.innerHTML = "";
     if(habits.length === 0) return;
     
-    // 현재 달력에 선택된 '연도'를 기준으로 1년 치(1월 1일 ~ 12월 31일)를 그립니다!
     const year = currentDisplayDate.getFullYear();
     document.getElementById('yearly-tab-title').innerHTML = `🗺️ ${year}년 연간 대형 정원`;
     
     const startDateStr = `${year}-01-01`;
     const startDayOfWeek = getDayOfWeek(startDateStr);
     
-    // 윤년(Leap year) 계산
     const isLeapYear = (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
     const daysInYear = isLeapYear ? 366 : 365;
     
@@ -636,14 +639,12 @@ function renderYearlyTab() {
         
         const grid = card.querySelector(".yearly-grid");
         
-        // 1월 1일의 요일을 맞추기 위해 앞부분 빈칸 채우기
         for(let i = 0; i < startDayOfWeek; i++) {
             const emptyCell = document.createElement('div');
             emptyCell.className = 'yearly-cell hidden';
             grid.appendChild(emptyCell);
         }
         
-        // 정확히 그 해의 365일(또는 366일) 그리기
         let currentDate = startDateStr;
         for(let i = 0; i < daysInYear; i++) {
             const cell = document.createElement('div');
@@ -663,7 +664,6 @@ function renderYearlyTab() {
         
         container.appendChild(card);
         
-        // 오늘이 포함된 해라면 오늘 날짜 근처로, 아니라면 맨 오른쪽으로 스크롤
         setTimeout(() => {
             const scrollContainer = document.getElementById(`yearly-scroll-${habit.id}`);
             if(scrollContainer) scrollContainer.scrollLeft = scrollContainer.scrollWidth;
