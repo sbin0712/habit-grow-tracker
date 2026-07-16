@@ -3,22 +3,35 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HabitGrow v5.2 - 드래그 앤 드롭 트래커</title>
+<title>HabitGrow v6.0 - 목표 요일 설정 트래커</title>
 <style>
 /* ==================================================
    Growing Grass System
 ================================================== */
 .day-cell { 
-    aspect-ratio: 1; 
-    position: relative; 
-    border-radius: 5px; 
-    background: var(--border); 
-    cursor: pointer; 
-    transition: transform 0.1s ease;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.15); 
+    aspect-ratio: 1; position: relative; border-radius: 5px; background: var(--border); 
+    cursor: pointer; transition: transform 0.1s ease; box-shadow: inset 0 2px 4px rgba(0,0,0,0.15); 
 }
 .day-cell:hover { transform: translateY(-2px); }
 .day-cell.completed { background: transparent; box-shadow: none; }
+
+/* 🚫 쉬는 날(목표 요일이 아님) 스타일 - 예쁜 빗금 패턴 */
+.day-cell.disabled {
+    pointer-events: none; /* 클릭 불가 */
+    box-shadow: none;
+    background: repeating-linear-gradient(
+        45deg,
+        rgba(0,0,0,0.03), rgba(0,0,0,0.03) 4px,
+        rgba(0,0,0,0.08) 4px, rgba(0,0,0,0.08) 8px
+    );
+}
+:root[data-theme="github"] .day-cell.disabled {
+    background: repeating-linear-gradient(
+        45deg,
+        rgba(255,255,255,0.02), rgba(255,255,255,0.02) 4px,
+        rgba(255,255,255,0.04) 4px, rgba(255,255,255,0.04) 8px
+    );
+}
 
 .sprout-emoji {
     position: absolute; inset: 0; display: flex; justify-content: center; align-items: center;
@@ -46,10 +59,7 @@
     background: var(--card-bg); border: 1px solid var(--border); padding: 15px 20px;
     border-radius: 14px; margin-bottom: 25px; display: flex; justify-content: space-around;
 }
-.badge-item {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    opacity: 0.3; filter: grayscale(100%); transition: all 0.4s ease; text-align: center;
-}
+.badge-item { display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0.3; filter: grayscale(100%); transition: all 0.4s ease; text-align: center; }
 .badge-item.earned { opacity: 1; filter: grayscale(0%); transform: scale(1.1); }
 .badge-icon { font-size: 2.2rem; margin-bottom: 5px; }
 .badge-name { font-size: 0.85rem; font-weight: bold; color: var(--text-muted); }
@@ -92,29 +102,32 @@ header { display:flex; justify-content:space-between; align-items:center; paddin
 /* ==================================================
    Add Habit & Cards
 ================================================== */
-.add-habit-form { display:flex; gap:10px; background: var(--card-bg); border: 1px solid var(--border); padding:20px; border-radius:14px; margin-bottom:25px; }
-.add-habit-form input { flex:1; padding:12px; border-radius:8px; border: 1px solid var(--border); background: var(--bg-color); color: var(--text-main); outline:none; }
-.add-habit-form input:focus { border-color: var(--primary); }
+.add-habit-form { display:flex; flex-direction:column; gap:15px; background: var(--card-bg); border: 1px solid var(--border); padding:20px; border-radius:14px; margin-bottom:25px; }
+.add-habit-row { display: flex; gap: 10px; }
+.add-habit-row input { flex:1; padding:12px; border-radius:8px; border: 1px solid var(--border); background: var(--bg-color); color: var(--text-main); outline:none; }
+.add-habit-row input:focus { border-color: var(--primary); }
 .primary-btn { background: var(--primary); color:white; border:none; padding: 0 25px; border-radius:8px; cursor:pointer; font-weight:bold; }
 .primary-btn:hover { background: var(--primary-hover); }
 
-.habits-container { display:flex; flex-direction:column; gap:18px; }
-/* 드래그 앤 드롭 스타일 추가 */
-.habit-card { 
-    background: var(--card-bg); border: 1px solid var(--border); border-radius:16px; padding:20px; 
-    cursor: grab; /* 마우스 오버 시 잡을 수 있다는 표시 */
+/* 목표 요일 선택기 UI */
+.day-selector-container { display: flex; align-items: center; gap: 10px; font-size: 0.9rem; }
+.day-selector-label { font-weight: bold; color: var(--text-muted); }
+.day-btns { display: flex; gap: 5px; }
+.day-btn { 
+    width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    background: var(--bg-color); color: var(--text-muted); border: 1px solid var(--border); cursor: pointer;
+    font-size: 0.85rem; font-weight: bold; transition: all 0.2s; user-select: none;
 }
-.habit-card:active { cursor: grabbing; }
-.habit-card.dragging {
-    opacity: 0.5;
-    border: 2px dashed var(--primary);
-    transform: scale(0.98);
-}
+.day-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
 
+.habits-container { display:flex; flex-direction:column; gap:18px; }
+.habit-card { background: var(--card-bg); border: 1px solid var(--border); border-radius:16px; padding:20px; cursor: grab; }
+.habit-card:active { cursor: grabbing; }
+.habit-card.dragging { opacity: 0.5; border: 2px dashed var(--primary); transform: scale(0.98); }
 .habit-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; }
-/* 드래그 핸들 (三 아이콘) */
 .drag-handle { color: var(--text-muted); margin-right: 12px; font-size: 1.2rem; cursor: grab; user-select: none; }
-.habit-title { font-size:1.25rem; font-weight:bold; }
+.habit-title { font-size:1.25rem; font-weight:bold; display: flex; align-items: center; gap: 10px; }
+.habit-days-badge { font-size: 0.75rem; background: var(--border); padding: 3px 8px; border-radius: 12px; font-weight: normal; color: var(--text-muted); }
 
 .stats { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
 .stat { background: var(--bg-color); border: 1px solid var(--border); padding:5px 10px; border-radius:20px; font-size:.8rem; }
@@ -133,8 +146,9 @@ header { display:flex; justify-content:space-between; align-items:center; paddin
 @media(max-width:600px){
     body { padding:12px; }
     header { flex-direction:column; align-items:flex-start; gap:15px; }
-    .add-habit-form { flex-direction:column; }
+    .add-habit-row { flex-direction:column; }
     .primary-btn { height:42px; }
+    .day-selector-container { flex-direction: column; align-items: flex-start; }
     .habit-header { align-items:flex-start; gap:10px; }
     .grass-grid { grid-template-columns: repeat(15,1fr); gap:4px; }
     .habit-card { padding:15px; }
@@ -149,7 +163,7 @@ header { display:flex; justify-content:space-between; align-items:center; paddin
 <div class="container">
     <header>
         <div class="logo">
-            <h1>🌿 HabitGrow v5.2</h1>
+            <h1>🌿 HabitGrow v6.0</h1>
             <p id="today-text"></p>
         </div>
         <div class="theme-selector">
@@ -177,8 +191,22 @@ header { display:flex; justify-content:space-between; align-items:center; paddin
     </div>
 
     <div class="add-habit-form">
-        <input id="habit-input" maxlength="50" placeholder="예: 물 2L 마시기 (추가 후 마우스로 끌어서 순서 변경!)">
-        <button class="primary-btn" id="add-btn">추가하기</button>
+        <div class="add-habit-row">
+            <input id="habit-input" maxlength="50" placeholder="예: 월수금 헬스장 가기">
+            <button class="primary-btn" id="add-btn">추가하기</button>
+        </div>
+        <div class="day-selector-container">
+            <span class="day-selector-label">🗓️ 목표 요일:</span>
+            <div class="day-btns">
+                <div class="day-btn active" data-val="1">월</div>
+                <div class="day-btn active" data-val="2">화</div>
+                <div class="day-btn active" data-val="3">수</div>
+                <div class="day-btn active" data-val="4">목</div>
+                <div class="day-btn active" data-val="5">금</div>
+                <div class="day-btn active" data-val="6">토</div>
+                <div class="day-btn active" data-val="0">일</div>
+            </div>
+        </div>
     </div>
 
     <div style="display:flex; gap:10px; margin-bottom:20px;">
@@ -235,22 +263,42 @@ function playPopSound() {
 }
 
 // ==================================================
+// 요일 선택기 토글 로직
+// ==================================================
+document.querySelectorAll('.day-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        btn.classList.toggle('active');
+    });
+});
+
+function getSelectedDays() {
+    const activeBtns = document.querySelectorAll('.day-btn.active');
+    const days = Array.from(activeBtns).map(btn => parseInt(btn.getAttribute('data-val')));
+    return days;
+}
+
+// ==================================================
 // Core Data System
 // ==================================================
-const STORAGE_KEY = "habitgrow_data_v5";
+const STORAGE_KEY = "habitgrow_data_v6";
 let habits = loadData();
 let badges = JSON.parse(localStorage.getItem("habitgrow_badges")) || { tree: false, month: false, five: false };
 
 const BADGE_INFO = {
-    tree: { icon: '🌳', title: '첫 나무 달성!', desc: '대단해요! 하나의 습관을 3일 연속 달성했습니다.' },
-    month: { icon: '🔥', title: '30일 연속 달성!', desc: '엄청난 끈기입니다! 한 달 동안 꾸준히 달성하셨네요.' },
-    five: { icon: '🖐️', title: '습관 5개 마스터!', desc: '하루에 무려 5개의 습관을 동시에 완료하셨습니다.' }
+    tree: { icon: '🌳', title: '첫 나무 달성!', desc: '대단해요! 3일 연속 목표를 달성했습니다.' },
+    month: { icon: '🔥', title: '30일 연속 달성!', desc: '엄청난 끈기입니다! 한 달 내내 꾸준히 달성하셨네요.' },
+    five: { icon: '🖐️', title: '습관 5개 마스터!', desc: '하루에 무려 5개의 습관을 완료하셨습니다.' }
 };
 
 function loadData(){
     try {
-        const data = localStorage.getItem(STORAGE_KEY) || localStorage.getItem("habitgrow_data_v4") || localStorage.getItem("habitgrow_data");
-        if(data) return JSON.parse(data);
+        const data = localStorage.getItem(STORAGE_KEY) || localStorage.getItem("habitgrow_data_v5") || localStorage.getItem("habitgrow_data_v4") || localStorage.getItem("habitgrow_data");
+        if(data) {
+            let parsed = JSON.parse(data);
+            // 구버전 데이터 호환: 목표 요일이 없는 과거 습관은 매일(0~6) 하는 것으로 처리
+            parsed.forEach(h => { if(!h.targetDays) h.targetDays = [0,1,2,3,4,5,6]; });
+            return parsed;
+        }
         return [];
     } catch(error){ return []; }
 }
@@ -286,45 +334,96 @@ function getLast30Days(){
 }
 
 // ==================================================
-// Statistics
+// Statistics (똑똑한 목표 요일 알고리즘 도입)
 // ==================================================
 function getCompletedCount(history){ return Object.values(history).filter(Boolean).length; }
 
-function calculateCurrentStreak(history){
+// 목표 요일만 건너뛰면서 연속 달성일을 셉니다.
+function calculateCurrentStreak(history, targetDays){
     let streak = 0; let current = getKSTDate();
-    if(!history[current]) current = addDays(current, -1);
-    while(history[current]){ streak++; current = addDays(current, -1); }
+    let currentDayOfWeek = new Date(current).getDay();
+    
+    // 오늘이 목표 요일인데 아직 안 했다면, 용서해주고 어제부터 세기 시작
+    if(!history[current] && targetDays.includes(currentDayOfWeek)) {
+        current = addDays(current, -1);
+    }
+    
+    // 무한루프 방지를 위해 최근 365일만 탐색
+    for(let i=0; i<365; i++) {
+        let d = new Date(current).getDay();
+        if(!targetDays.includes(d)) {
+            current = addDays(current, -1);
+            continue; // 목표 요일이 아니면 스트릭 유지하며 하루 전으로 패스
+        }
+        if(history[current]){
+            streak++;
+            current = addDays(current, -1);
+        } else {
+            break; // 목표 요일인데 안 했으면 스트릭 컷!
+        }
+    }
     return streak;
 }
 
-function calculateBestStreak(history){
+function calculateBestStreak(history, targetDays){
     const dates = Object.keys(history).filter(d=>history[d]).sort();
-    let best=0, current=0, previous=null;
-    dates.forEach(date=>{
-        if(previous && addDays(previous, 1)===date) { current++; } else { current=1; }
-        if(current>best) best=current;
-        previous=date;
+    let best = 0; let current = 0; let previous = null;
+    
+    dates.forEach(date => {
+        if(previous) {
+            let gapTargetDays = 0;
+            let tempDate = addDays(previous, 1);
+            while(tempDate < date) {
+                if(targetDays.includes(new Date(tempDate).getDay())) gapTargetDays++;
+                tempDate = addDays(tempDate, 1);
+            }
+            if(gapTargetDays === 0) current++; // 그 사이에 목표 요일이 없었다면 연속 성공!
+            else current = 1; // 빵꾸가 났다면 초기화
+        } else {
+            current = 1;
+        }
+        if(current > best) best = current;
+        previous = date;
     });
     return best;
 }
 
-function calculateSuccessRate(history){
-    const dates = getLast30Days(); let checkedCount = 0;
-    dates.forEach(date => { if(history[date]) checkedCount++; });
-    if (checkedCount === 0) return 0;
-    return Math.floor((checkedCount / 30) * 100);
+// 화면에 보이는 30일 중, '목표 요일인 날'만 분모로 삼아 정확한 달성률 계산!
+function calculateSuccessRate(history, targetDays){
+    const dates = getLast30Days(); 
+    let targetCount = 0; 
+    let checkedCount = 0;
+    
+    dates.forEach(date => {
+        let d = new Date(date).getDay();
+        if(targetDays.includes(d)) {
+            targetCount++;
+            if(history[date]) checkedCount++;
+        }
+    });
+    if (targetCount === 0) return 0;
+    return Math.floor((checkedCount / targetCount) * 100);
 }
 
 // ==================================================
 // Plant Growth & Badges Check
 // ==================================================
-function getStreakAtDate(history, dateStr) {
+function getStreakAtDate(history, dateStr, targetDays) {
     let streak = 0; let current = dateStr;
-    while(history[current]) { streak++; current = addDays(current, -1); }
+    for(let i=0; i<365; i++) {
+        let d = new Date(current).getDay();
+        if(!targetDays.includes(d)) {
+            current = addDays(current, -1); continue;
+        }
+        if(history[current]){
+            streak++; current = addDays(current, -1);
+        } else { break; }
+    }
     return streak;
 }
-function getPlantLevel(history, dateStr){
-    const streak = getStreakAtDate(history, dateStr);
+
+function getPlantLevel(history, dateStr, targetDays){
+    const streak = getStreakAtDate(history, dateStr, targetDays);
     if(streak >= 7) return 5;
     if(streak >= 5) return 4;
     if(streak >= 3) return 3;
@@ -334,8 +433,8 @@ function getPlantLevel(history, dateStr){
 
 function checkBadges(clickedDate) {
     let newlyEarned = null;
-    if (!badges.tree) { if (habits.some(h => calculateBestStreak(h.history) >= 3)) { badges.tree = true; newlyEarned = 'tree'; } }
-    if (!badges.month) { if (habits.some(h => calculateBestStreak(h.history) >= 30)) { badges.month = true; newlyEarned = 'month'; } }
+    if (!badges.tree) { if (habits.some(h => calculateBestStreak(h.history, h.targetDays) >= 3)) { badges.tree = true; newlyEarned = 'tree'; } }
+    if (!badges.month) { if (habits.some(h => calculateBestStreak(h.history, h.targetDays) >= 30)) { badges.month = true; newlyEarned = 'month'; } }
     if (!badges.five) {
         let completedToday = habits.filter(h => h.history[clickedDate]).length;
         if (completedToday >= 5) { badges.five = true; newlyEarned = 'five'; }
@@ -352,7 +451,9 @@ function renderBadges() {
 // ==================================================
 // Habit Objects & UI
 // ==================================================
-function createHabit(title){ return { id: Date.now().toString(), title, history:{}, createdAt: getKSTDate() }; }
+function createHabit(title, targetDays){ 
+    return { id: Date.now().toString(), title, targetDays, history:{}, createdAt: getKSTDate() }; 
+}
 
 const habitList = document.getElementById("habit-list");
 const habitInput = document.getElementById("habit-input");
@@ -364,7 +465,11 @@ function addHabit(){
     const title = habitInput.value.trim();
     if(!title){ alert("습관을 입력해주세요."); return; }
     if(habits.some(h=>h.title===title)){ alert("이미 존재하는 습관입니다."); return; }
-    habits.unshift(createHabit(title));
+    
+    const targetDays = getSelectedDays();
+    if(targetDays.length === 0) { alert("최소 하루 이상의 목표 요일을 선택해주세요!"); return; }
+
+    habits.unshift(createHabit(title, targetDays));
     saveData();
     habitInput.value="";
     renderFull(); 
@@ -387,20 +492,23 @@ function updateHabitCard(habitId, clickedDate) {
     const card = document.querySelector(`.habit-card[data-id="${habitId}"]`);
     if(!card) return;
 
-    card.querySelector('.stat-current').innerText = `🔥 ${calculateCurrentStreak(habit.history)}일 연속`;
-    card.querySelector('.stat-best').innerText = `🏆 최장 ${calculateBestStreak(habit.history)}일`;
+    card.querySelector('.stat-current').innerText = `🔥 ${calculateCurrentStreak(habit.history, habit.targetDays)}일 연속`;
+    card.querySelector('.stat-best').innerText = `🏆 최장 ${calculateBestStreak(habit.history, habit.targetDays)}일`;
     card.querySelector('.stat-total').innerText = `🌱 총 ${getCompletedCount(habit.history)}회`;
-    card.querySelector('.stat-rate').innerText = `📈 달성률 ${calculateSuccessRate(habit.history)}%`;
+    card.querySelector('.stat-rate').innerText = `📈 달성률 ${calculateSuccessRate(habit.history, habit.targetDays)}%`;
 
     const cells = card.querySelectorAll('.day-cell');
     cells.forEach(cell => {
         const date = cell.getAttribute('data-date');
+        // 휴일(disabled) 칸은 클릭 및 렌더링 스킵
+        if(cell.classList.contains('disabled')) return;
+
         const isCompleted = habit.history[date];
         const existingPlant = cell.querySelector('.sprout-emoji');
 
         if (isCompleted) {
             cell.classList.add('completed');
-            const targetClassName = `sprout-emoji level${getPlantLevel(habit.history, date)}`;
+            const targetClassName = `sprout-emoji level${getPlantLevel(habit.history, date, habit.targetDays)}`;
             if (existingPlant) { existingPlant.className = targetClassName; } 
             else {
                 const plant = document.createElement('div');
@@ -419,16 +527,8 @@ function updateHabitCard(habitId, clickedDate) {
 // Delete Habit & Modals
 // ==================================================
 let deleteTarget=null;
-function deleteHabit(id){
-    deleteTarget=id;
-    document.getElementById("delete-modal").style.display="flex";
-}
-function confirmDelete(){
-    habits = habits.filter(h=>h.id!==deleteTarget);
-    saveData();
-    closeDeleteModal();
-    renderFull();
-}
+function deleteHabit(id){ deleteTarget=id; document.getElementById("delete-modal").style.display="flex"; }
+function confirmDelete(){ habits = habits.filter(h=>h.id!==deleteTarget); saveData(); closeDeleteModal(); renderFull(); }
 function closeDeleteModal(){ document.getElementById("delete-modal").style.display="none"; }
 function showBadgeModal(badgeId) {
     const info = BADGE_INFO[badgeId];
@@ -440,39 +540,28 @@ function showBadgeModal(badgeId) {
 function closeBadgeModal(){ document.getElementById("badge-modal").style.display="none"; }
 
 // ==================================================
-// Drag & Drop 로직 (순서 변경)
+// Drag & Drop 로직
 // ==================================================
 function setupDragAndDrop() {
     habitList.addEventListener('dragover', e => {
-        e.preventDefault(); // 드롭 허용
+        e.preventDefault(); 
         const draggingCard = document.querySelector('.dragging');
         if (!draggingCard) return;
         
         const afterElement = getDragAfterElement(habitList, e.clientY);
-        if (afterElement == null) {
-            habitList.appendChild(draggingCard);
-        } else {
-            habitList.insertBefore(draggingCard, afterElement);
-        }
+        if (afterElement == null) { habitList.appendChild(draggingCard); } 
+        else { habitList.insertBefore(draggingCard, afterElement); }
     });
 }
-
-// 마우스(y축) 위치에 따라 어떤 카드 앞/뒤에 넣을지 계산하는 함수
 function getDragAfterElement(container, y) {
     const draggableElements = [...container.querySelectorAll('.habit-card:not(.dragging)')];
-    
     return draggableElements.reduce((closest, child) => {
         const box = child.getBoundingClientRect();
         const offset = y - box.top - box.height / 2;
-        if (offset < 0 && offset > closest.offset) {
-            return { offset: offset, element: child };
-        } else {
-            return closest;
-        }
+        if (offset < 0 && offset > closest.offset) { return { offset: offset, element: child }; } 
+        else { return closest; }
     }, { offset: Number.NEGATIVE_INFINITY }).element;
 }
-
-// DOM에 반영된 순서대로 원본 habits 배열을 업데이트하고 저장
 function updateHabitsOrder() {
     const currentCards = [...document.querySelectorAll('.habit-card')];
     const reorderedHabits = [];
@@ -483,6 +572,16 @@ function updateHabitsOrder() {
     });
     habits = reorderedHabits;
     saveData();
+}
+
+// ==================================================
+// Format Target Days Text
+// ==================================================
+function getTargetDaysText(daysArray) {
+    if(daysArray.length === 7) return "매일";
+    const dayMap = {0:'일',1:'월',2:'화',3:'수',4:'목',5:'금',6:'토'};
+    const sorted = [...daysArray].sort((a,b) => (a===0?7:a) - (b===0?7:b)); // 일요일을 맨 뒤로 정렬
+    return sorted.map(d => dayMap[d]).join(', ') + "요일";
 }
 
 // ==================================================
@@ -499,44 +598,52 @@ function renderFull(){
         const card = document.createElement("div");
         card.className="habit-card"; 
         card.setAttribute("data-id", habit.id); 
-        card.draggable = true; // HTML5 드래그 활성화
+        card.draggable = true;
         
-        // 드래그 이벤트 리스너 추가
         card.addEventListener('dragstart', () => { card.classList.add('dragging'); });
-        card.addEventListener('dragend', () => { 
-            card.classList.remove('dragging'); 
-            updateHabitsOrder(); // 드래그가 끝나면 순서 저장
-        });
+        card.addEventListener('dragend', () => { card.classList.remove('dragging'); updateHabitsOrder(); });
         
         card.innerHTML=`
         <div class="habit-header">
             <div style="display: flex; align-items: center;">
                 <div class="drag-handle" title="드래그해서 순서 변경">☰</div>
-                <div class="habit-title">${escapeHTML(habit.title)}</div>
+                <div class="habit-title">
+                    ${escapeHTML(habit.title)}
+                    <span class="habit-days-badge">${getTargetDaysText(habit.targetDays)}</span>
+                </div>
             </div>
             <button class="delete-btn" onclick="deleteHabit('${habit.id}')">삭제</button>
         </div>
         <div class="stats" style="margin-bottom: 15px;">
-            <div class="stat stat-current">🔥 ${calculateCurrentStreak(habit.history)}일 연속</div>
-            <div class="stat stat-best">🏆 최장 ${calculateBestStreak(habit.history)}일</div>
+            <div class="stat stat-current">🔥 ${calculateCurrentStreak(habit.history, habit.targetDays)}일 연속</div>
+            <div class="stat stat-best">🏆 최장 ${calculateBestStreak(habit.history, habit.targetDays)}일</div>
             <div class="stat stat-total">🌱 총 ${getCompletedCount(habit.history)}회</div>
-            <div class="stat stat-rate">📈 달성률 ${calculateSuccessRate(habit.history)}%</div>
+            <div class="stat stat-rate">📈 달성률 ${calculateSuccessRate(habit.history, habit.targetDays)}%</div>
         </div>
         <div class="grass-grid"></div>
         `;
+        
         const grid = card.querySelector(".grass-grid");
         dates.forEach(date=>{
             const cell = document.createElement("div");
             cell.className="day-cell"; cell.setAttribute("data-date", date);
             
-            if(habit.history[date]){
-                cell.classList.add("completed");
-                const plant = document.createElement("div");
-                plant.className = `sprout-emoji level${getPlantLevel(habit.history, date)}`;
-                cell.appendChild(plant);
+            // 목표 요일인지 검사
+            let dayOfWeek = new Date(date).getDay();
+            if(!habit.targetDays.includes(dayOfWeek)) {
+                // 목표 요일이 아니면 빗금 처리하고 클릭 막기
+                cell.classList.add("disabled");
+                cell.title = date + " (쉬는 날)";
+            } else {
+                if(habit.history[date]){
+                    cell.classList.add("completed");
+                    const plant = document.createElement("div");
+                    plant.className = `sprout-emoji level${getPlantLevel(habit.history, date, habit.targetDays)}`;
+                    cell.appendChild(plant);
+                }
+                cell.title=date;
+                cell.addEventListener("click", ()=>toggleDay(habit.id, date));
             }
-            cell.title=date;
-            cell.addEventListener("click", ()=>toggleDay(habit.id, date));
             grid.appendChild(cell);
         });
         habitList.appendChild(card);
@@ -586,7 +693,7 @@ function importData(event){
 function init(){
     document.getElementById("today-text").textContent = `오늘은 ${getKSTDate()} 입니다. 나만의 정원을 키워보세요 🌱`;
     loadTheme();
-    setupDragAndDrop(); // 드래그 앤 드롭 세팅
+    setupDragAndDrop(); 
     renderFull(); 
     renderBadges(); 
 }
