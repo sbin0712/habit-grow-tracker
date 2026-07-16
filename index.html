@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HabitGrow v5.1 - 뾱! 사운드 이펙트 트래커</title>
+<title>HabitGrow v5.2 - 드래그 앤 드롭 트래커</title>
 <style>
 /* ==================================================
    Growing Grass System
@@ -50,14 +50,11 @@
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     opacity: 0.3; filter: grayscale(100%); transition: all 0.4s ease; text-align: center;
 }
-.badge-item.earned {
-    opacity: 1; filter: grayscale(0%); transform: scale(1.1);
-}
+.badge-item.earned { opacity: 1; filter: grayscale(0%); transform: scale(1.1); }
 .badge-icon { font-size: 2.2rem; margin-bottom: 5px; }
 .badge-name { font-size: 0.85rem; font-weight: bold; color: var(--text-muted); }
 .badge-item.earned .badge-name { color: var(--primary); }
 
-/* 축하 팝업 애니메이션 */
 @keyframes badgeUnlock {
     0% { transform: scale(0.5) rotate(-10deg); opacity: 0; }
     50% { transform: scale(1.2) rotate(10deg); opacity: 1; }
@@ -102,9 +99,23 @@ header { display:flex; justify-content:space-between; align-items:center; paddin
 .primary-btn:hover { background: var(--primary-hover); }
 
 .habits-container { display:flex; flex-direction:column; gap:18px; }
-.habit-card { background: var(--card-bg); border: 1px solid var(--border); border-radius:16px; padding:20px; }
+/* 드래그 앤 드롭 스타일 추가 */
+.habit-card { 
+    background: var(--card-bg); border: 1px solid var(--border); border-radius:16px; padding:20px; 
+    cursor: grab; /* 마우스 오버 시 잡을 수 있다는 표시 */
+}
+.habit-card:active { cursor: grabbing; }
+.habit-card.dragging {
+    opacity: 0.5;
+    border: 2px dashed var(--primary);
+    transform: scale(0.98);
+}
+
 .habit-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; }
+/* 드래그 핸들 (三 아이콘) */
+.drag-handle { color: var(--text-muted); margin-right: 12px; font-size: 1.2rem; cursor: grab; user-select: none; }
 .habit-title { font-size:1.25rem; font-weight:bold; }
+
 .stats { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
 .stat { background: var(--bg-color); border: 1px solid var(--border); padding:5px 10px; border-radius:20px; font-size:.8rem; }
 .delete-btn { color:#ef4444; background:none; border: 1px solid #ef4444; border-radius:6px; padding:5px 10px; cursor:pointer; }
@@ -138,7 +149,7 @@ header { display:flex; justify-content:space-between; align-items:center; paddin
 <div class="container">
     <header>
         <div class="logo">
-            <h1>🌿 HabitGrow v5.1</h1>
+            <h1>🌿 HabitGrow v5.2</h1>
             <p id="today-text"></p>
         </div>
         <div class="theme-selector">
@@ -166,7 +177,7 @@ header { display:flex; justify-content:space-between; align-items:center; paddin
     </div>
 
     <div class="add-habit-form">
-        <input id="habit-input" maxlength="50" placeholder="예: 물 2L 마시기 (습관 5개를 만들어보세요!)">
+        <input id="habit-input" maxlength="50" placeholder="예: 물 2L 마시기 (추가 후 마우스로 끌어서 순서 변경!)">
         <button class="primary-btn" id="add-btn">추가하기</button>
     </div>
 
@@ -203,40 +214,25 @@ header { display:flex; justify-content:space-between; align-items:center; paddin
 
 <script>
 // ==================================================
-// 🔊 Audio System (뾱! 사운드)
+// 🔊 Audio System
 // ==================================================
 const AudioContext = window.AudioContext || window.webkitAudioContext;
 let audioCtx;
-
 function playPopSound() {
-    if (!audioCtx) {
-        audioCtx = new AudioContext();
-    }
-    if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-    }
-
+    if (!audioCtx) audioCtx = new AudioContext();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
     const oscillator = audioCtx.createOscillator();
     const gainNode = audioCtx.createGain();
-
-    // 부드러운 사인파 형태
     oscillator.type = 'sine';
-    
-    // 높은 주파수에서 순식간에 낮은 주파수로 떨어지며 "뾱!" 소리 구현
     oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
     oscillator.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1);
-
-    // 볼륨 페이드아웃 (뚝 끊기는 소리 방지)
     gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
     gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-
     oscillator.connect(gainNode);
     gainNode.connect(audioCtx.destination);
-
     oscillator.start();
     oscillator.stop(audioCtx.currentTime + 0.1);
 }
-
 
 // ==================================================
 // Core Data System
@@ -327,7 +323,6 @@ function getStreakAtDate(history, dateStr) {
     while(history[current]) { streak++; current = addDays(current, -1); }
     return streak;
 }
-
 function getPlantLevel(history, dateStr){
     const streak = getStreakAtDate(history, dateStr);
     if(streak >= 7) return 5;
@@ -339,22 +334,13 @@ function getPlantLevel(history, dateStr){
 
 function checkBadges(clickedDate) {
     let newlyEarned = null;
-    if (!badges.tree) {
-        if (habits.some(h => calculateBestStreak(h.history) >= 3)) { badges.tree = true; newlyEarned = 'tree'; }
-    }
-    if (!badges.month) {
-        if (habits.some(h => calculateBestStreak(h.history) >= 30)) { badges.month = true; newlyEarned = 'month'; }
-    }
+    if (!badges.tree) { if (habits.some(h => calculateBestStreak(h.history) >= 3)) { badges.tree = true; newlyEarned = 'tree'; } }
+    if (!badges.month) { if (habits.some(h => calculateBestStreak(h.history) >= 30)) { badges.month = true; newlyEarned = 'month'; } }
     if (!badges.five) {
         let completedToday = habits.filter(h => h.history[clickedDate]).length;
         if (completedToday >= 5) { badges.five = true; newlyEarned = 'five'; }
     }
-
-    if (newlyEarned) {
-        saveData(); 
-        renderBadges(); 
-        showBadgeModal(newlyEarned); 
-    }
+    if (newlyEarned) { saveData(); renderBadges(); showBadgeModal(newlyEarned); }
 }
 
 function renderBadges() {
@@ -388,13 +374,8 @@ function toggleDay(habitId, date){
     const habit = habits.find(h=>h.id===habitId);
     if(!habit) return;
     
-    // 이미 달성한 것을 취소할 때는 소리가 안 나고, 새로 심을 때만 소리가 나게 설정
-    if(habit.history[date]){ 
-        delete habit.history[date]; 
-    } else { 
-        habit.history[date]=true; 
-        playPopSound(); // 🔊 뾱! 소리 재생
-    }
+    if(habit.history[date]){ delete habit.history[date]; } 
+    else { habit.history[date]=true; playPopSound(); }
     saveData();
     
     updateHabitCard(habitId, date);
@@ -449,7 +430,6 @@ function confirmDelete(){
     renderFull();
 }
 function closeDeleteModal(){ document.getElementById("delete-modal").style.display="none"; }
-
 function showBadgeModal(badgeId) {
     const info = BADGE_INFO[badgeId];
     document.getElementById('badge-modal-icon').innerText = info.icon;
@@ -458,6 +438,52 @@ function showBadgeModal(badgeId) {
     document.getElementById("badge-modal").style.display="flex";
 }
 function closeBadgeModal(){ document.getElementById("badge-modal").style.display="none"; }
+
+// ==================================================
+// Drag & Drop 로직 (순서 변경)
+// ==================================================
+function setupDragAndDrop() {
+    habitList.addEventListener('dragover', e => {
+        e.preventDefault(); // 드롭 허용
+        const draggingCard = document.querySelector('.dragging');
+        if (!draggingCard) return;
+        
+        const afterElement = getDragAfterElement(habitList, e.clientY);
+        if (afterElement == null) {
+            habitList.appendChild(draggingCard);
+        } else {
+            habitList.insertBefore(draggingCard, afterElement);
+        }
+    });
+}
+
+// 마우스(y축) 위치에 따라 어떤 카드 앞/뒤에 넣을지 계산하는 함수
+function getDragAfterElement(container, y) {
+    const draggableElements = [...container.querySelectorAll('.habit-card:not(.dragging)')];
+    
+    return draggableElements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        if (offset < 0 && offset > closest.offset) {
+            return { offset: offset, element: child };
+        } else {
+            return closest;
+        }
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
+
+// DOM에 반영된 순서대로 원본 habits 배열을 업데이트하고 저장
+function updateHabitsOrder() {
+    const currentCards = [...document.querySelectorAll('.habit-card')];
+    const reorderedHabits = [];
+    currentCards.forEach(card => {
+        const id = card.getAttribute('data-id');
+        const habit = habits.find(h => h.id === id);
+        if(habit) reorderedHabits.push(habit);
+    });
+    habits = reorderedHabits;
+    saveData();
+}
 
 // ==================================================
 // Full Render
@@ -471,20 +497,30 @@ function renderFull(){
     const dates = getLast30Days();
     habits.forEach(habit=>{
         const card = document.createElement("div");
-        card.className="habit-card"; card.setAttribute("data-id", habit.id); 
+        card.className="habit-card"; 
+        card.setAttribute("data-id", habit.id); 
+        card.draggable = true; // HTML5 드래그 활성화
+        
+        // 드래그 이벤트 리스너 추가
+        card.addEventListener('dragstart', () => { card.classList.add('dragging'); });
+        card.addEventListener('dragend', () => { 
+            card.classList.remove('dragging'); 
+            updateHabitsOrder(); // 드래그가 끝나면 순서 저장
+        });
         
         card.innerHTML=`
         <div class="habit-header">
-            <div>
+            <div style="display: flex; align-items: center;">
+                <div class="drag-handle" title="드래그해서 순서 변경">☰</div>
                 <div class="habit-title">${escapeHTML(habit.title)}</div>
-                <div class="stats">
-                    <div class="stat stat-current">🔥 ${calculateCurrentStreak(habit.history)}일 연속</div>
-                    <div class="stat stat-best">🏆 최장 ${calculateBestStreak(habit.history)}일</div>
-                    <div class="stat stat-total">🌱 총 ${getCompletedCount(habit.history)}회</div>
-                    <div class="stat stat-rate">📈 달성률 ${calculateSuccessRate(habit.history)}%</div>
-                </div>
             </div>
             <button class="delete-btn" onclick="deleteHabit('${habit.id}')">삭제</button>
+        </div>
+        <div class="stats" style="margin-bottom: 15px;">
+            <div class="stat stat-current">🔥 ${calculateCurrentStreak(habit.history)}일 연속</div>
+            <div class="stat stat-best">🏆 최장 ${calculateBestStreak(habit.history)}일</div>
+            <div class="stat stat-total">🌱 총 ${getCompletedCount(habit.history)}회</div>
+            <div class="stat stat-rate">📈 달성률 ${calculateSuccessRate(habit.history)}%</div>
         </div>
         <div class="grass-grid"></div>
         `;
@@ -550,6 +586,7 @@ function importData(event){
 function init(){
     document.getElementById("today-text").textContent = `오늘은 ${getKSTDate()} 입니다. 나만의 정원을 키워보세요 🌱`;
     loadTheme();
+    setupDragAndDrop(); // 드래그 앤 드롭 세팅
     renderFull(); 
     renderBadges(); 
 }
