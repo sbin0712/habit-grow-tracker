@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="github">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HabitGrow - 나만의 맞춤형 습관 트래커</title>
+    <style>
+        /* ================= 테마 변수 설정 ================= */
+        :root[data-theme="github"] {
+            --bg-color: #0d1117;
+            --card-bg: #161b22;
+            --text-main: #c9d1d9;
+            --text-muted: #8b949e;
+            --border: #30363d;
+            --primary: #2ea043;
+            --primary-hover: #238636;
+            --grass-0: #2d333b; /* 비어있는 날 */
+            --grass-completed: #39d353; /* 완료된 날 */
+        }
+
+        :root[data-theme="light"] {
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --border: #e5e7eb;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --grass-0: #f1f5f9;
+            --grass-completed: #3b82f6;
+        }
+
+        :root[data-theme="pastel"] {
+            --bg-color: #fffbeb;
+            --card-bg: #ffffff;
+            --text-main: #451a03;
+            --text-muted: #78350f;
+            --border: #fde68a;
+            --primary: #f59e0b;
+            --primary-hover: #d97706;
+            --grass-0: #fef3c7;
+            --grass-completed: #10b981;
+        }
+
+        /* ================= 기본 스타일 ================= */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Pretendard', 'Apple SD Gothic Neo', sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); transition: all 0.3s ease; padding: 20px; }
+        
+        .container { max-width: 800px; margin: 0 auto; }
+        
+        /* 헤더 영역 */
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+        .logo h1 { font-size: 1.8rem; margin-bottom: 5px; }
+        .logo p { color: var(--text-muted); font-size: 0.9rem; }
+        
+        .theme-selector select {
+            background: var(--card-bg); color: var(--text-main); border: 1px solid var(--border); padding: 8px 12px; border-radius: 6px; outline: none; cursor: pointer;
+        }
+
+        /* 입력 폼 */
+        .add-habit-form { background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px solid var(--border); display: flex; gap: 10px; margin-bottom: 30px; }
+        .add-habit-form input { flex: 1; background: var(--bg-color); color: var(--text-main); border: 1px solid var(--border); padding: 12px; border-radius: 6px; font-size: 1rem; outline: none; }
+        .add-habit-form input:focus { border-color: var(--primary); }
+        .add-habit-form button { background: var(--primary); color: white; border: none; padding: 0 24px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 1rem; transition: background 0.2s; }
+        .add-habit-form button:hover { background: var(--primary-hover); }
+
+        /* 습관 리스트 */
+        .habits-container { display: flex; flex-direction: column; gap: 15px; }
+        .habit-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+        
+        .habit-header { display: flex; justify-content: space-between; align-items: center; }
+        .habit-title-box h3 { font-size: 1.2rem; }
+        .habit-streak { font-size: 0.9rem; color: var(--primary); font-weight: bold; margin-top: 5px; }
+        
+        .delete-btn { background: transparent; color: #ef4444; border: 1px solid #ef4444; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
+        .delete-btn:hover { background: #ef4444; color: white; }
+
+        /* 30일 잔디 그리드 */
+        .streak-grid { display: grid; grid-template-columns: repeat(15, 1fr); gap: 4px; }
+        @media(min-width: 600px) { .streak-grid { grid-template-columns: repeat(30, 1fr); gap: 6px; } }
+        
+        .day-box { 
+            aspect-ratio: 1; background-color: var(--grass-0); border-radius: 3px; cursor: pointer; transition: transform 0.1s, background-color 0.2s; position: relative;
+        }
+        .day-box:hover { transform: scale(1.15); }
+        .day-box.completed { background-color: var(--grass-completed); }
+        
+        /* 툴팁 */
+        .day-box::after {
+            content: attr(data-date); position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%);
+            background: #000; color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 10px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 10;
+        }
+        .day-box:hover::after { opacity: 1; }
+
+        .empty-state { text-align: center; padding: 40px; color: var(--text-muted); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div class="logo">
+            <h1>🌿 HabitGrow</h1>
+            <p id="today-date"></p>
+        </div>
+        <div class="theme-selector">
+            <select id="theme-select" onchange="changeTheme()">
+                <option value="github">GitHub Dark</option>
+                <option value="light">Modern Light</option>
+                <option value="pastel">Pastel Meadow</option>
+            </select>
+        </div>
+    </header>
+
+    <div class="add-habit-form">
+        <input type="text" id="habit-input" placeholder="예: 매일 물 2L 마시기, 팔굽혀펴기 50개" onkeypress="handleEnter(event)">
+        <button onclick="addHabit()">추가하기</button>
+    </div>
+
+    <div class="habits-container" id="habits-list">
+        </div>
+</div>
+
+<script>
+    // 상태 관리 (로컬 스토리지 연동)
+    let habits = JSON.parse(localStorage.getItem('habitgrow_data')) || [];
+
+    // 오늘 날짜 문자열(YYYY-MM-DD) 생성 함수
+    function getTodayString() {
+        const today = new Date();
+        // 한국 시간(KST) 보정
+        today.setHours(today.getHours() + 9);
+        return today.toISOString().split('T')[0];
+    }
+
+    // 화면 렌더링 초기화
+    function init() {
+        document.getElementById('today-date').innerText = `오늘은 ${getTodayString()} 입니다. 매일매일 잔디를 심어보세요!`;
+        const savedTheme = localStorage.getItem('habitgrow_theme') || 'github';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        document.getElementById('theme-select').value = savedTheme;
+        renderHabits();
+    }
+
+    // 테마 변경
+    function changeTheme() {
+        const theme = document.getElementById('theme-select').value;
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('habitgrow_theme', theme);
+    }
+
+    // 엔터키 입력 처리
+    function handleEnter(e) {
+        if(e.key === 'Enter') addHabit();
+    }
+
+    // 습관 추가
+    function addHabit() {
+        const input = document.getElementById('habit-input');
+        const title = input.value.trim();
+        if(!title) return alert("습관을 입력해주세요!");
+
+        const newHabit = {
+            id: Date.now().toString(),
+            title: title,
+            history: {} // {'2026-07-16': true, '2026-07-15': true} 형태
+        };
+
+        habits.unshift(newHabit);
+        saveData();
+        input.value = '';
+        renderHabits();
+    }
+
+    // 습관 삭제
+    function deleteHabit(id) {
+        if(!confirm("정말 이 습관을 삭제하시겠습니까?")) return;
+        habits = habits.filter(h => h.id !== id);
+        saveData();
+        renderHabits();
+    }
+
+    // 날짜 토글 (잔디 심기/취소)
+    function toggleDay(habitId, dateStr) {
+        const habit = habits.find(h => h.id === habitId);
+        if(habit.history[dateStr]) {
+            delete habit.history[dateStr];
+        } else {
+            habit.history[dateStr] = true;
+        }
+        saveData();
+        renderHabits();
+    }
+
+    // 데이터 저장
+    function saveData() {
+        localStorage.setItem('habitgrow_data', JSON.stringify(habits));
+    }
+
+    // 스트릭(연속 달성일) 계산 알고리즘
+    function calculateStreak(history) {
+        let streak = 0;
+        let today = new Date();
+        
+        while(true) {
+            let dateStr = today.toISOString().split('T')[0];
+            if(history[dateStr]) {
+                streak++;
+            } else {
+                // 단, 아직 오늘의 완료를 안눌렀을 뿐 어제까지 연속으로 했다면 스트릭을 끊지 않음
+                if(streak === 0 && new Date().toISOString().split('T')[0] === dateStr) {
+                    // 통과
+                } else {
+                    break;
+                }
+            }
+            today.setDate(today.getDate() - 1);
+        }
+        return streak;
+    }
+
+    // 최근 30일 날짜 배열 가져오기
+    function getPast30Days() {
+        const dates = [];
+        for(let i=29; i>=0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            dates.push(d.toISOString().split('T')[0]);
+        }
+        return dates;
+    }
+
+    // UI 화면 렌더링
+    function renderHabits() {
+        const container = document.getElementById('habits-list');
+        container.innerHTML = '';
+
+        if(habits.length === 0) {
+            container.innerHTML = '<div class="empty-state"><h3>등록된 습관이 없습니다.</h3><p>위 입력창에서 새로운 습관을 추가해 보세요!</p></div>';
+            return;
+        }
+
+        const dates = getPast30Days();
+
+        habits.forEach(habit => {
+            const streak = calculateStreak(habit.history);
+            
+            // 카드 엘리먼트 생성
+            const card = document.createElement('div');
+            card.className = 'habit-card';
+            
+            // 헤더 조립
+            let html = `
+                <div class="habit-header">
+                    <div class="habit-title-box">
+                        <h3>${habit.title}</h3>
+                        <div class="habit-streak">🔥 현재 ${streak}일 연속 달성 중!</div>
+                    </div>
+                    <button class="delete-btn" onclick="deleteHabit('${habit.id}')">삭제</button>
+                </div>
+                <div class="streak-grid">
+            `;
+
+            // 30일 잔디 그리드 조립
+            dates.forEach(dateStr => {
+                const isCompleted = habit.history[dateStr] ? 'completed' : '';
+                html += `<div class="day-box ${isCompleted}" data-date="${dateStr}" onclick="toggleDay('${habit.id}', '${dateStr}')"></div>`;
+            });
+
+            html += `</div>`;
+            card.innerHTML = html;
+            container.appendChild(card);
+        });
+    }
+
+    // 실행
+    init();
+</script>
+</body>
+</html>
