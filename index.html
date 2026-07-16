@@ -14,8 +14,8 @@
             --border: #30363d;
             --primary: #2ea043;
             --primary-hover: #238636;
-            --grass-0: #2d333b; /* 비어있는 날 */
-            --grass-completed: #39d353; /* 완료된 날 */
+            --grass-0: #1b2028; /* 파인 땅 느낌을 위해 살짝 어둡게 */
+            --grass-completed: #2ea043; 
         }
 
         :root[data-theme="light"] {
@@ -26,8 +26,8 @@
             --border: #e5e7eb;
             --primary: #3b82f6;
             --primary-hover: #2563eb;
-            --grass-0: #f1f5f9;
-            --grass-completed: #3b82f6;
+            --grass-0: #e2e8f0;
+            --grass-completed: #93c5fd;
         }
 
         :root[data-theme="pastel"] {
@@ -39,7 +39,7 @@
             --primary: #f59e0b;
             --primary-hover: #d97706;
             --grass-0: #fef3c7;
-            --grass-completed: #10b981;
+            --grass-completed: #6ee7b7;
         }
 
         /* ================= 기본 스타일 ================= */
@@ -75,19 +75,54 @@
         .delete-btn { background: transparent; color: #ef4444; border: 1px solid #ef4444; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
         .delete-btn:hover { background: #ef4444; color: white; }
 
-        /* 30일 잔디 그리드 */
+        /* ================= 30일 잔디 그리드 & 애니메이션 ================= */
         .streak-grid { display: grid; grid-template-columns: repeat(15, 1fr); gap: 4px; }
         @media(min-width: 600px) { .streak-grid { grid-template-columns: repeat(30, 1fr); gap: 6px; } }
         
-        .day-box { 
-            aspect-ratio: 1; background-color: var(--grass-0); border-radius: 3px; cursor: pointer; transition: transform 0.1s, background-color 0.2s; position: relative;
+        /* 심어지는 애니메이션 키프레임 */
+        @keyframes plantSprout {
+            0% { transform: scale(0) translateY(10px) rotate(-15deg); opacity: 0; }
+            60% { transform: scale(1.3) translateY(-3px) rotate(10deg); opacity: 1; }
+            100% { transform: scale(1) translateY(0) rotate(0deg); opacity: 1; }
         }
-        .day-box:hover { transform: scale(1.15); }
-        .day-box.completed { background-color: var(--grass-completed); }
+
+        .day-box { 
+            aspect-ratio: 1; 
+            background-color: var(--grass-0); 
+            border-radius: 4px; 
+            cursor: pointer; 
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            /* 땅이 살짝 파여있는 듯한 입체감 */
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); 
+            transition: all 0.2s ease;
+        }
         
-        /* 툴팁 */
+        .day-box:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1); 
+        }
+
+        /* 완료된 날(잔디가 심어진 상태) */
+        .day-box.completed { 
+            background-color: var(--grass-completed); 
+            box-shadow: inset 0 0 10px rgba(255,255,255,0.1); /* 볼록한 느낌 */
+        }
+        
+        /* 완료 시 나타나는 새싹 이모지 */
+        .day-box.completed::before {
+            content: '🌱';
+            font-size: 14px; /* 새싹 크기 */
+            animation: plantSprout 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)); /* 이모지 그림자 */
+        }
+        @media(min-width: 600px) { .day-box.completed::before { font-size: 16px; } }
+        
+        /* 날짜 툴팁 */
         .day-box::after {
-            content: attr(data-date); position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%);
+            content: attr(data-date); position: absolute; bottom: 130%; left: 50%; transform: translateX(-50%);
             background: #000; color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 10px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 10;
         }
         .day-box:hover::after { opacity: 1; }
@@ -125,36 +160,30 @@
     // 상태 관리 (로컬 스토리지 연동)
     let habits = JSON.parse(localStorage.getItem('habitgrow_data')) || [];
 
-    // 오늘 날짜 문자열(YYYY-MM-DD) 생성 함수
     function getTodayString() {
         const today = new Date();
-        // 한국 시간(KST) 보정
         today.setHours(today.getHours() + 9);
         return today.toISOString().split('T')[0];
     }
 
-    // 화면 렌더링 초기화
     function init() {
-        document.getElementById('today-date').innerText = `오늘은 ${getTodayString()} 입니다. 매일매일 잔디를 심어보세요!`;
+        document.getElementById('today-date').innerText = `오늘은 ${getTodayString()} 입니다. 텅 빈 흙에 잔디를 심어보세요!`;
         const savedTheme = localStorage.getItem('habitgrow_theme') || 'github';
         document.documentElement.setAttribute('data-theme', savedTheme);
         document.getElementById('theme-select').value = savedTheme;
         renderHabits();
     }
 
-    // 테마 변경
     function changeTheme() {
         const theme = document.getElementById('theme-select').value;
         document.documentElement.setAttribute('data-theme', theme);
         localStorage.setItem('habitgrow_theme', theme);
     }
 
-    // 엔터키 입력 처리
     function handleEnter(e) {
         if(e.key === 'Enter') addHabit();
     }
 
-    // 습관 추가
     function addHabit() {
         const input = document.getElementById('habit-input');
         const title = input.value.trim();
@@ -163,7 +192,7 @@
         const newHabit = {
             id: Date.now().toString(),
             title: title,
-            history: {} // {'2026-07-16': true, '2026-07-15': true} 형태
+            history: {}
         };
 
         habits.unshift(newHabit);
@@ -172,7 +201,6 @@
         renderHabits();
     }
 
-    // 습관 삭제
     function deleteHabit(id) {
         if(!confirm("정말 이 습관을 삭제하시겠습니까?")) return;
         habits = habits.filter(h => h.id !== id);
@@ -180,7 +208,6 @@
         renderHabits();
     }
 
-    // 날짜 토글 (잔디 심기/취소)
     function toggleDay(habitId, dateStr) {
         const habit = habits.find(h => h.id === habitId);
         if(habit.history[dateStr]) {
@@ -192,12 +219,10 @@
         renderHabits();
     }
 
-    // 데이터 저장
     function saveData() {
         localStorage.setItem('habitgrow_data', JSON.stringify(habits));
     }
 
-    // 스트릭(연속 달성일) 계산 알고리즘
     function calculateStreak(history) {
         let streak = 0;
         let today = new Date();
@@ -207,7 +232,6 @@
             if(history[dateStr]) {
                 streak++;
             } else {
-                // 단, 아직 오늘의 완료를 안눌렀을 뿐 어제까지 연속으로 했다면 스트릭을 끊지 않음
                 if(streak === 0 && new Date().toISOString().split('T')[0] === dateStr) {
                     // 통과
                 } else {
@@ -219,7 +243,6 @@
         return streak;
     }
 
-    // 최근 30일 날짜 배열 가져오기
     function getPast30Days() {
         const dates = [];
         for(let i=29; i>=0; i--) {
@@ -230,7 +253,6 @@
         return dates;
     }
 
-    // UI 화면 렌더링
     function renderHabits() {
         const container = document.getElementById('habits-list');
         container.innerHTML = '';
@@ -245,23 +267,20 @@
         habits.forEach(habit => {
             const streak = calculateStreak(habit.history);
             
-            // 카드 엘리먼트 생성
             const card = document.createElement('div');
             card.className = 'habit-card';
             
-            // 헤더 조립
             let html = `
                 <div class="habit-header">
                     <div class="habit-title-box">
                         <h3>${habit.title}</h3>
-                        <div class="habit-streak">🔥 현재 ${streak}일 연속 달성 중!</div>
+                        <div class="habit-streak">🔥 현재 ${streak}일 연속 심기 성공!</div>
                     </div>
                     <button class="delete-btn" onclick="deleteHabit('${habit.id}')">삭제</button>
                 </div>
                 <div class="streak-grid">
             `;
 
-            // 30일 잔디 그리드 조립
             dates.forEach(dateStr => {
                 const isCompleted = habit.history[dateStr] ? 'completed' : '';
                 html += `<div class="day-box ${isCompleted}" data-date="${dateStr}" onclick="toggleDay('${habit.id}', '${dateStr}')"></div>`;
@@ -273,7 +292,6 @@
         });
     }
 
-    // 실행
     init();
 </script>
 </body>
