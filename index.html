@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HabitGrow v2 - 나만의 성장형 습관 트래커</title>
+<title>HabitGrow v3 - 나만의 성장형 습관 트래커</title>
 <style>
 /* ==================================================
    Growing Grass System
@@ -19,21 +19,24 @@
     background: transparent;
 }
 
-/* 식물 (이모지 중앙 정렬 및 애니메이션) */
+/* 식물 기본 설정 (애니메이션 제거) */
 .plant {
     position: absolute;
     inset: 0;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 24px; /* 식물 크기 */
+    font-size: 24px;
     z-index: 5;
     pointer-events: none;
-    animation: growPlant .45s cubic-bezier(.175, .885, .32, 1.275);
-    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)); /* 약간의 그림자 추가 */
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3));
 }
 
-/* 성장 애니메이션 */
+/* 방금 클릭한 칸에만 적용될 성장 애니메이션 클래스 */
+.plant.animate {
+    animation: growPlant .45s cubic-bezier(.175, .885, .32, 1.275);
+}
+
 @keyframes growPlant {
     0% { transform: scale(.1) translateY(10px); opacity:0; }
     60% { transform: scale(1.2) translateY(-2px); opacity:1; }
@@ -104,7 +107,6 @@ header { display:flex; justify-content:space-between; align-items:center; paddin
 ================================================== */
 .grass-grid { display:grid; grid-template-columns: repeat(15,1fr); gap:5px; }
 @media(min-width:600px){ .grass-grid { grid-template-columns: repeat(30,1fr); gap:6px; } }
-/* overflow: hidden 제거하여 이모지가 잘리지 않게 함 */
 .day-cell { aspect-ratio:1; position:relative; border-radius:5px; background: var(--border); cursor:pointer; transition:.2s; }
 .day-cell:hover { transform: translateY(-2px); }
 
@@ -119,7 +121,7 @@ header { display:flex; justify-content:space-between; align-items:center; paddin
     .habit-header { align-items:flex-start; gap:10px; }
     .grass-grid { grid-template-columns: repeat(15,1fr); gap:4px; }
     .habit-card { padding:15px; }
-    .plant { font-size: 18px; } /* 모바일에서 이모지 크기 조정 */
+    .plant { font-size: 18px; }
 }
 </style>
 </head>
@@ -195,17 +197,22 @@ function saveData(){
 }
 
 // ==================================================
-// Date System (KST)
+// Date System (안전한 날짜 연산)
 // ==================================================
-function getKSTDate(date=new Date()){
-    const koreaTime = new Date(date.getTime() + (9 * 60 * 60 * 1000));
+function getKSTDate(){
+    const koreaTime = new Date(new Date().getTime() + (9 * 60 * 60 * 1000));
     return koreaTime.toISOString().split("T")[0];
 }
 
 function addDays(dateString, amount){
-    const date = new Date(dateString);
+    const parts = dateString.split('-');
+    const date = new Date(parts[0], parts[1] - 1, parts[2]); // 로컬 자정 기준
     date.setDate(date.getDate() + amount);
-    return getKSTDate(date);
+    
+    const yy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    return `${yy}-${mm}-${dd}`;
 }
 
 function getLast30Days(){
@@ -261,19 +268,30 @@ function calculateSuccessRate(history){
 }
 
 // ==================================================
-// Plant Growth
+// Plant Growth (해당 날짜 기준의 스트릭 계산)
 // ==================================================
-function getPlantLevel(history){
-    const streak = calculateCurrentStreak(history);
+// 특정 날짜(dateStr)를 기준으로 과거로 연속된 일수를 계산하여 레벨을 결정합니다!
+function getStreakAtDate(history, dateStr) {
+    let streak = 0;
+    let current = dateStr;
+    while(history[current]) {
+        streak++;
+        current = addDays(current, -1);
+    }
+    return streak;
+}
+
+function getPlantLevel(history, dateStr){
+    const streak = getStreakAtDate(history, dateStr);
     if(streak>=30) return 5;
     if(streak>=14) return 4;
-    if(streak>=7) return 3;
-    if(streak>=3) return 2;
+    if(streak>=7)  return 3;
+    if(streak>=3)  return 2;
     return 1; 
 }
 
-function createPlant(history){
-    const level = getPlantLevel(history);
+function createPlant(history, dateStr){
+    const level = getPlantLevel(history, dateStr);
     const plant = document.createElement("div");
     plant.className = "plant level" + level;
     return plant;
@@ -305,6 +323,9 @@ function addHabit(){
 addButton.addEventListener("click", addHabit);
 habitInput.addEventListener("keydown", e=>{ if(e.key==="Enter") addHabit(); });
 
+// ==================================================
+// Toggle Day
+// ==================================================
 function toggleDay(habitId, date){
     const habit = habits.find(h=>h.id===habitId);
     if(!habit) return;
@@ -315,7 +336,9 @@ function toggleDay(habitId, date){
         habit.history[date]=true;
     }
     saveData();
-    render();
+    
+    // 재렌더링 시, 클릭한 요소에만 애니메이션을 주기 위해 정보를 넘겨줍니다.
+    render(habitId, date);
 }
 
 // ==================================================
@@ -342,9 +365,9 @@ function closeModal(){
 }
 
 // ==================================================
-// Render
+// Render (클릭된 요소 정보 받기)
 // ==================================================
-function render(){
+function render(clickedHabitId = null, clickedDate = null){
     habitList.innerHTML="";
     if(habits.length===0){
         habitList.innerHTML=`
@@ -380,12 +403,12 @@ function render(){
         `;
 
         const grid = card.querySelector(".grass-grid");
-        createGrassGrid(grid, habit);
+        createGrassGrid(grid, habit, clickedHabitId, clickedDate);
         habitList.appendChild(card);
     });
 }
 
-function createGrassGrid(grid, habit){
+function createGrassGrid(grid, habit, clickedHabitId, clickedDate){
     const dates = getLast30Days();
     dates.forEach(date=>{
         const cell = document.createElement("div");
@@ -393,7 +416,13 @@ function createGrassGrid(grid, habit){
         
         if(habit.history[date]){
             cell.classList.add("completed");
-            const plant = createPlant(habit.history);
+            const plant = createPlant(habit.history, date);
+            
+            // 방금 사용자가 클릭한 바로 그 칸에만 애니메이션을 부여합니다!
+            if(habit.id === clickedHabitId && date === clickedDate) {
+                plant.classList.add("animate");
+            }
+            
             if(plant) cell.appendChild(plant);
         }
         
@@ -461,7 +490,7 @@ function importData(event){
 function init(){
     document.getElementById("today-text").textContent = `오늘은 ${getKSTDate()} 입니다. 나만의 정원을 키워보세요 🌱`;
     loadTheme();
-    render();
+    render(); // 초기 로딩 시에는 애니메이션 없이 조용히 렌더링
 }
 
 init();
