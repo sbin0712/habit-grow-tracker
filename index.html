@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HabitGrow v5.0 - 배지 시스템 트래커</title>
+<title>HabitGrow v5.1 - 뾱! 사운드 이펙트 트래커</title>
 <style>
 /* ==================================================
    Growing Grass System
@@ -138,7 +138,7 @@ header { display:flex; justify-content:space-between; align-items:center; paddin
 <div class="container">
     <header>
         <div class="logo">
-            <h1>🌿 HabitGrow v5.0</h1>
+            <h1>🌿 HabitGrow v5.1</h1>
             <p id="today-text"></p>
         </div>
         <div class="theme-selector">
@@ -202,6 +202,42 @@ header { display:flex; justify-content:space-between; align-items:center; paddin
 </div>
 
 <script>
+// ==================================================
+// 🔊 Audio System (뾱! 사운드)
+// ==================================================
+const AudioContext = window.AudioContext || window.webkitAudioContext;
+let audioCtx;
+
+function playPopSound() {
+    if (!audioCtx) {
+        audioCtx = new AudioContext();
+    }
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+
+    // 부드러운 사인파 형태
+    oscillator.type = 'sine';
+    
+    // 높은 주파수에서 순식간에 낮은 주파수로 떨어지며 "뾱!" 소리 구현
+    oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1);
+
+    // 볼륨 페이드아웃 (뚝 끊기는 소리 방지)
+    gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    oscillator.start();
+    oscillator.stop(audioCtx.currentTime + 0.1);
+}
+
+
 // ==================================================
 // Core Data System
 // ==================================================
@@ -301,34 +337,23 @@ function getPlantLevel(history, dateStr){
     return 1;
 }
 
-// 🏆 새로운 배지 시스템 로직!
 function checkBadges(clickedDate) {
     let newlyEarned = null;
-
-    // 1. 첫 나무 달성 (3일 연속)
     if (!badges.tree) {
-        if (habits.some(h => calculateBestStreak(h.history) >= 3)) {
-            badges.tree = true; newlyEarned = 'tree';
-        }
+        if (habits.some(h => calculateBestStreak(h.history) >= 3)) { badges.tree = true; newlyEarned = 'tree'; }
     }
-    // 2. 30일 연속 달성
     if (!badges.month) {
-        if (habits.some(h => calculateBestStreak(h.history) >= 30)) {
-            badges.month = true; newlyEarned = 'month';
-        }
+        if (habits.some(h => calculateBestStreak(h.history) >= 30)) { badges.month = true; newlyEarned = 'month'; }
     }
-    // 3. 습관 5개 동시 달성 (클릭한 날짜에 완료된 습관이 5개 이상인지)
     if (!badges.five) {
         let completedToday = habits.filter(h => h.history[clickedDate]).length;
-        if (completedToday >= 5) {
-            badges.five = true; newlyEarned = 'five';
-        }
+        if (completedToday >= 5) { badges.five = true; newlyEarned = 'five'; }
     }
 
     if (newlyEarned) {
-        saveData(); // 배지 상태 저장
-        renderBadges(); // 화면 배지 업데이트
-        showBadgeModal(newlyEarned); // 축하 팝업 띄우기
+        saveData(); 
+        renderBadges(); 
+        showBadgeModal(newlyEarned); 
     }
 }
 
@@ -363,12 +388,17 @@ function toggleDay(habitId, date){
     const habit = habits.find(h=>h.id===habitId);
     if(!habit) return;
     
-    if(habit.history[date]){ delete habit.history[date]; }
-    else{ habit.history[date]=true; }
+    // 이미 달성한 것을 취소할 때는 소리가 안 나고, 새로 심을 때만 소리가 나게 설정
+    if(habit.history[date]){ 
+        delete habit.history[date]; 
+    } else { 
+        habit.history[date]=true; 
+        playPopSound(); // 🔊 뾱! 소리 재생
+    }
     saveData();
     
     updateHabitCard(habitId, date);
-    checkBadges(date); // 체크할 때마다 배지 획득 조건 검사!
+    checkBadges(date); 
 }
 
 function updateHabitCard(habitId, clickedDate) {
@@ -420,7 +450,6 @@ function confirmDelete(){
 }
 function closeDeleteModal(){ document.getElementById("delete-modal").style.display="none"; }
 
-// 🏆 배지 모달 함수
 function showBadgeModal(badgeId) {
     const info = BADGE_INFO[badgeId];
     document.getElementById('badge-modal-icon').innerText = info.icon;
@@ -522,7 +551,7 @@ function init(){
     document.getElementById("today-text").textContent = `오늘은 ${getKSTDate()} 입니다. 나만의 정원을 키워보세요 🌱`;
     loadTheme();
     renderFull(); 
-    renderBadges(); // 저장된 배지 상태 불러오기
+    renderBadges(); 
 }
 init();
 </script>
