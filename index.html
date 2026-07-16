@@ -1,2299 +1,467 @@
 <!DOCTYPE html>
 <html lang="ko" data-theme="github">
-
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>HabitGrow v2 - 나만의 성장형 습관 트래커</title>
-
 <style>
-
 /* ==================================================
    Growing Grass System
 ================================================== */
 
-
 /* 빈 땅 */
-
 .day-cell.empty {
-
-    background:
-    linear-gradient(
-        145deg,
-        rgba(255,255,255,.05),
-        rgba(0,0,0,.2)
-    ),
-    var(--border);
-
+    background: linear-gradient(145deg, rgba(255,255,255,.05), rgba(0,0,0,.2)), var(--border);
 }
-
 
 /* 심어진 상태 */
-
 .day-cell.completed {
-
-    background:
-    transparent;
-
+    background: transparent;
 }
 
-
-
 /* 식물 */
-
 .plant {
-
-
     position:absolute;
-
     width:130%;
-
     height:130%;
-
-
     left:-15%;
-
     bottom:-5%;
-
     display:block;
     z-index:5;
     pointer-events:none;
-
-   
-
-
     background-repeat:no-repeat;
-
-    background-position:
-    bottom center;
-
-    background-size:
-    contain;
-
-
-    transform-origin:
-    bottom center;
-
-
-    animation:
-    growPlant .45s
-    cubic-bezier(
-        .175,
-        .885,
-        .32,
-        1.275
-    );
-
-
+    background-position: bottom center;
+    background-size: contain;
+    transform-origin: bottom center;
+    animation: growPlant .45s cubic-bezier(.175, .885, .32, 1.275);
 }
-
-
 
 /* 성장 애니메이션 */
-
 @keyframes growPlant {
-
-
-0% {
-
-    transform:
-    scale(.1)
-    translateY(20px);
-
-    opacity:0;
-
+    0% { transform: scale(.1) translateY(20px); opacity:0; }
+    60% { transform: scale(1.15) translateY(-5px); opacity:1; }
+    100% { transform: scale(1) translateY(0); }
 }
-
-
-60% {
-
-    transform:
-    scale(1.15)
-    translateY(-5px);
-
-    opacity:1;
-
-}
-
-
-100% {
-
-    transform:
-    scale(1)
-    translateY(0);
-
-}
-
-
-}
-
-
-
 
 /* ==================================================
    Plant Levels
-
    1~2  새싹
    3~6  잔디
    7~13 풍성
    14~29 꽃
    30+ 나무
-
 ================================================== */
-
-
-.level1 {
-
-background-image:url(
-"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E
-
-%3Cpath d='M50 90 Q40 55 50 25 Q60 55 50 90'
-fill='%2365a30d'/%3E
-
-%3Cpath d='M50 90 Q60 65 75 55 Q65 80 50 90'
-fill='%2384cc16'/%3E
-
-%3Ccircle cx='50' cy='92' r='8'
-fill='%23a16207'/%3E
-
-%3C/svg%3E"
-
-);
-
-}
-
-
-
-
-.level2 {
-
-
-background-image:url(
-"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E
-
-
-%3Ccircle cx='50' cy='90' r='12'
-fill='%239a3412'/%3E
-
-
-%3Cpath d='M50 90 C20 50 35 20 50 10'
-stroke='%2365a30d'
-stroke-width='10'
-fill='none'/%3E
-
-
-%3Cpath d='M50 80 C80 50 75 30 60 20'
-stroke='%2384cc16'
-stroke-width='8'
-fill='none'/%3E
-
-
-%3C/svg%3E"
-
-);
-
-
-}
-
-
-
-
-
-.level3 {
-
-
-background-image:url(
-"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E
-
-
-%3Ccircle cx='50' cy='90' r='14'
-fill='%237c2d12'/%3E
-
-
-%3Cpath d='M50 85 Q20 45 35 15'
-stroke='%2365a30d'
-stroke-width='12'
-fill='none'/%3E
-
-
-%3Cpath d='M50 85 Q70 40 85 25'
-stroke='%2384cc16'
-stroke-width='12'
-fill='none'/%3E
-
-
-%3Cpath d='M50 85 Q50 35 50 10'
-stroke='%234d7c0f'
-stroke-width='10'
-fill='none'/%3E
-
-
-%3C/svg%3E"
-
-);
-
-
-}
-
-
-
-
-
-.level4 {
-
-
-background-image:url(
-"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E
-
-
-%3Ccircle cx='50' cy='90' r='15'
-fill='%2392462f'/%3E
-
-
-%3Cpath d='M50 85 Q20 30 50 10'
-stroke='%2365a30d'
-stroke-width='14'
-fill='none'/%3E
-
-
-%3Cpath d='M50 85 Q80 30 50 10'
-stroke='%2384cc16'
-stroke-width='14'
-fill='none'/%3E
-
-
-%3Ccircle cx='50' cy='18'
-r='8'
-fill='%23facc15'/%3E
-
-
-%3C/svg%3E"
-
-);
-
-
-}
-
-
-
-
-
-.level5 {
-
-
-background-image:url(
-"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E
-
-
-%3Crect x='43'
-y='55'
-width='14'
-height='35'
-fill='%2392462f'/%3E
-
-
-%3Ccircle cx='50'
-cy='40'
-r='32'
-fill='%2365a30d'/%3E
-
-
-%3Ccircle cx='30'
-cy='35'
-r='18'
-fill='%2384cc16'/%3E
-
-
-%3Ccircle cx='70'
-cy='35'
-r='18'
-fill='%234d7c0f'/%3E
-
-
-%3C/svg%3E"
-
-);
-
-
-}
-
-
-
+.level1 { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 90 Q40 55 50 25 Q60 55 50 90' fill='%2365a30d'/%3E%3Cpath d='M50 90 Q60 65 75 55 Q65 80 50 90' fill='%2384cc16'/%3E%3Ccircle cx='50' cy='92' r='8' fill='%23a16207'/%3E%3C/svg%3E"); }
+.level2 { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='90' r='12' fill='%239a3412'/%3E%3Cpath d='M50 90 C20 50 35 20 50 10' stroke='%2365a30d' stroke-width='10' fill='none'/%3E%3Cpath d='M50 80 C80 50 75 30 60 20' stroke='%2384cc16' stroke-width='8' fill='none'/%3E%3C/svg%3E"); }
+.level3 { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='90' r='14' fill='%237c2d12'/%3E%3Cpath d='M50 85 Q20 45 35 15' stroke='%2365a30d' stroke-width='12' fill='none'/%3E%3Cpath d='M50 85 Q70 40 85 25' stroke='%2384cc16' stroke-width='12' fill='none'/%3E%3Cpath d='M50 85 Q50 35 50 10' stroke='%234d7c0f' stroke-width='10' fill='none'/%3E%3C/svg%3E"); }
+.level4 { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='90' r='15' fill='%2392462f'/%3E%3Cpath d='M50 85 Q20 30 50 10' stroke='%2365a30d' stroke-width='14' fill='none'/%3E%3Cpath d='M50 85 Q80 30 50 10' stroke='%2384cc16' stroke-width='14' fill='none'/%3E%3Ccircle cx='50' cy='18' r='8' fill='%23facc15'/%3E%3C/svg%3E"); }
+.level5 { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect x='43' y='55' width='14' height='35' fill='%2392462f'/%3E%3Ccircle cx='50' cy='40' r='32' fill='%2365a30d'/%3E%3Ccircle cx='30' cy='35' r='18' fill='%2384cc16'/%3E%3Ccircle cx='70' cy='35' r='18' fill='%234d7c0f'/%3E%3C/svg%3E"); }
 
 /* ==================================================
    Modal 준비
 ================================================== */
-
-
-.modal-backdrop {
-
-
-display:none;
-
-position:fixed;
-
-inset:0;
-
-background:
-rgba(0,0,0,.5);
-
-align-items:center;
-
-justify-content:center;
-
-z-index:1000;
-
-
-}
-
-
-
-.modal {
-
-
-background:
-var(--card-bg);
-
-color:
-var(--text-main);
-
-padding:25px;
-
-border-radius:15px;
-
-width:90%;
-
-max-width:400px;
-
-
-}
-
-
-
-.modal button {
-
-
-margin-top:15px;
-
-padding:10px 20px;
-
-border-radius:8px;
-
-cursor:pointer;
-
-
-}
+.modal-backdrop { display:none; position:fixed; inset:0; background: rgba(0,0,0,.5); align-items:center; justify-content:center; z-index:1000; }
+.modal { background: var(--card-bg); color: var(--text-main); padding:25px; border-radius:15px; width:90%; max-width:400px; }
+.modal button { margin-top:15px; padding:10px 20px; border-radius:8px; cursor:pointer; }
 
 /* ==================================================
-   HabitGrow v2
    Theme System
 ================================================== */
-
-:root[data-theme="github"] {
-
-    --bg-color:#0d1117;
-    --card-bg:#161b22;
-    --text-main:#c9d1d9;
-    --text-muted:#8b949e;
-    --border:#30363d;
-
-    --primary:#2ea043;
-    --primary-hover:#238636;
-
-    --soil:#302014;
-    --grass:#2ea043;
-}
-
-
-:root[data-theme="light"] {
-
-    --bg-color:#f3f4f6;
-    --card-bg:#ffffff;
-    --text-main:#1f2937;
-    --text-muted:#6b7280;
-    --border:#e5e7eb;
-
-    --primary:#3b82f6;
-    --primary-hover:#2563eb;
-
-    --soil:#d6b38a;
-    --grass:#60a5fa;
-}
-
-
-:root[data-theme="pastel"] {
-
-    --bg-color:#fffbeb;
-    --card-bg:#ffffff;
-    --text-main:#451a03;
-    --text-muted:#78350f;
-    --border:#fde68a;
-
-    --primary:#f59e0b;
-    --primary-hover:#d97706;
-
-    --soil:#c08457;
-    --grass:#86efac;
-}
-
-
+:root[data-theme="github"] { --bg-color:#0d1117; --card-bg:#161b22; --text-main:#c9d1d9; --text-muted:#8b949e; --border:#30363d; --primary:#2ea043; --primary-hover:#238636; --soil:#302014; --grass:#2ea043; }
+:root[data-theme="light"] { --bg-color:#f3f4f6; --card-bg:#ffffff; --text-main:#1f2937; --text-muted:#6b7280; --border:#e5e7eb; --primary:#3b82f6; --primary-hover:#2563eb; --soil:#d6b38a; --grass:#60a5fa; }
+:root[data-theme="pastel"] { --bg-color:#fffbeb; --card-bg:#ffffff; --text-main:#451a03; --text-muted:#78350f; --border:#fde68a; --primary:#f59e0b; --primary-hover:#d97706; --soil:#c08457; --grass:#86efac; }
 
 /* ==================================================
-   Reset
+   Reset & Layout
 ================================================== */
+* { box-sizing:border-box; margin:0; padding:0; font-family: Pretendard, Apple SD Gothic Neo, sans-serif; }
+body { background: var(--bg-color); color: var(--text-main); min-height:100vh; padding:20px; transition:.3s; }
+button, input, select { font-family:inherit; }
 
-* {
-
-    box-sizing:border-box;
-    margin:0;
-    padding:0;
-
-    font-family:
-    Pretendard,
-    Apple SD Gothic Neo,
-    sans-serif;
-}
-
-
-
-body {
-
-    background:
-    var(--bg-color);
-
-    color:
-    var(--text-main);
-
-    min-height:100vh;
-
-    padding:20px;
-
-    transition:.3s;
-
-}
-
-
-
-button,
-input,
-select {
-
-    font-family:inherit;
-
-}
-
-
+.container { width:100%; max-width:900px; margin:auto; }
+header { display:flex; justify-content:space-between; align-items:center; padding-bottom:20px; margin-bottom:25px; border-bottom: 1px solid var(--border); }
+.logo h1 { font-size:2rem; }
+.logo p { margin-top:5px; color: var(--text-muted); font-size:.9rem; }
+.theme-selector select { padding:8px 12px; border-radius:8px; background: var(--card-bg); color: var(--text-main); border: 1px solid var(--border); }
 
 /* ==================================================
-   Layout
+   Add Habit & Cards
 ================================================== */
-
-
-.container {
-
-    width:100%;
-    max-width:900px;
-
-    margin:auto;
-
-}
-
-
-
-header {
-
-    display:flex;
-
-    justify-content:space-between;
-
-    align-items:center;
-
-    padding-bottom:20px;
-
-    margin-bottom:25px;
-
-    border-bottom:
-    1px solid var(--border);
-
-}
-
-
-
-.logo h1 {
-
-    font-size:2rem;
-
-}
-
-
-.logo p {
-
-    margin-top:5px;
-
-    color:
-    var(--text-muted);
-
-    font-size:.9rem;
-
-}
-
-
-
-.theme-selector select {
-
-    padding:8px 12px;
-
-    border-radius:8px;
-
-    background:
-    var(--card-bg);
-
-    color:
-    var(--text-main);
-
-    border:
-    1px solid var(--border);
-
-}
-
-
-
-/* ==================================================
-   Add Habit
-================================================== */
-
-
-.add-habit-form {
-
-
-    display:flex;
-
-    gap:10px;
-
-    background:
-    var(--card-bg);
-
-    border:
-    1px solid var(--border);
-
-    padding:20px;
-
-    border-radius:14px;
-
-    margin-bottom:25px;
-
-}
-
-
-
-.add-habit-form input {
-
-
-    flex:1;
-
-    padding:12px;
-
-    border-radius:8px;
-
-    border:
-    1px solid var(--border);
-
-    background:
-    var(--bg-color);
-
-    color:
-    var(--text-main);
-
-    outline:none;
-
-}
-
-
-
-.add-habit-form input:focus {
-
-    border-color:
-    var(--primary);
-
-}
-
-
-
-.primary-btn {
-
-
-    background:
-    var(--primary);
-
-    color:white;
-
-    border:none;
-
-    padding:
-    0 25px;
-
-    border-radius:8px;
-
-    cursor:pointer;
-
-    font-weight:bold;
-
-}
-
-
-
-.primary-btn:hover {
-
-    background:
-    var(--primary-hover);
-
-}
-
-
-
-/* ==================================================
-   Habit Card
-================================================== */
-
-
-.habits-container {
-
-    display:flex;
-
-    flex-direction:column;
-
-    gap:18px;
-
-}
-
-
-
-.habit-card {
-
-
-    background:
-    var(--card-bg);
-
-    border:
-    1px solid var(--border);
-
-    border-radius:16px;
-
-    padding:20px;
-
-}
-
-
-
-.habit-header {
-
-
-    display:flex;
-
-    justify-content:space-between;
-
-    align-items:center;
-
-    margin-bottom:15px;
-
-}
-
-
-
-.habit-title {
-
-    font-size:1.25rem;
-
-}
-
-
-
-.stats {
-
-
-    display:flex;
-
-    flex-wrap:wrap;
-
-    gap:8px;
-
-    margin-top:10px;
-
-}
-
-
-
-.stat {
-
-
-    background:
-    var(--bg-color);
-
-    border:
-    1px solid var(--border);
-
-    padding:5px 10px;
-
-    border-radius:20px;
-
-    font-size:.8rem;
-
-}
-
-
-
-.delete-btn {
-
-
-    color:#ef4444;
-
-    background:none;
-
-    border:
-    1px solid #ef4444;
-
-    border-radius:6px;
-
-    padding:5px 10px;
-
-    cursor:pointer;
-
-}
-
-
-
-.delete-btn:hover {
-
-    background:#ef4444;
-
-    color:white;
-
-}
-
-
+.add-habit-form { display:flex; gap:10px; background: var(--card-bg); border: 1px solid var(--border); padding:20px; border-radius:14px; margin-bottom:25px; }
+.add-habit-form input { flex:1; padding:12px; border-radius:8px; border: 1px solid var(--border); background: var(--bg-color); color: var(--text-main); outline:none; }
+.add-habit-form input:focus { border-color: var(--primary); }
+.primary-btn { background: var(--primary); color:white; border:none; padding: 0 25px; border-radius:8px; cursor:pointer; font-weight:bold; }
+.primary-btn:hover { background: var(--primary-hover); }
+
+.habits-container { display:flex; flex-direction:column; gap:18px; }
+.habit-card { background: var(--card-bg); border: 1px solid var(--border); border-radius:16px; padding:20px; }
+.habit-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; }
+.habit-title { font-size:1.25rem; font-weight:bold; }
+.stats { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+.stat { background: var(--bg-color); border: 1px solid var(--border); padding:5px 10px; border-radius:20px; font-size:.8rem; }
+.delete-btn { color:#ef4444; background:none; border: 1px solid #ef4444; border-radius:6px; padding:5px 10px; cursor:pointer; }
+.delete-btn:hover { background:#ef4444; color:white; }
 
 /* ==================================================
    Grass Grid
 ================================================== */
-
-
-.grass-grid {
-
-
-    display:grid;
-
-    grid-template-columns:
-    repeat(15,1fr);
-
-    gap:5px;
-
-}
-
-
-
-@media(min-width:600px){
-
-
-.grass-grid {
-
-    grid-template-columns:
-    repeat(30,1fr);
-
-    gap:6px;
-
-}
-
-}
-
-
+.grass-grid { display:grid; grid-template-columns: repeat(15,1fr); gap:5px; }
+@media(min-width:600px){ .grass-grid { grid-template-columns: repeat(30,1fr); gap:6px; } }
+.day-cell { aspect-ratio:1; position:relative; border-radius:5px; background: var(--border); cursor:pointer; overflow:hidden; transition:.2s; }
+.day-cell:hover { transform: translateY(-2px); }
 
 /* ==================================================
-   Empty Cell
+  Mobile
 ================================================== */
-
-
-.day-cell {
-
-
-    aspect-ratio:1;
-
-    position:relative;
-
-    border-radius:5px;
-
-    background:
-    var(--border);
-
-    cursor:pointer;
-
-    overflow:hidden;
-
-    transition:.2s;
-
-}
-
-
-
-.day-cell:hover {
-
-
-    transform:
-    translateY(-2px);
-
-}
-
-
-/* ==================================================
- Mobile
-================================================== */
-
-
 @media(max-width:600px){
-
-
-body{
-
-padding:12px;
-
+    body { padding:12px; }
+    header { flex-direction:column; align-items:flex-start; gap:15px; }
+    .add-habit-form { flex-direction:column; }
+    .primary-btn { height:42px; }
+    .habit-header { align-items:flex-start; gap:10px; }
+    .grass-grid { grid-template-columns: repeat(15,1fr); gap:4px; }
+    .habit-card { padding:15px; }
 }
-
-
-header{
-
-flex-direction:column;
-
-align-items:flex-start;
-
-gap:15px;
-
-}
-
-
-
-.add-habit-form{
-
-flex-direction:column;
-
-}
-
-
-
-.primary-btn{
-
-height:42px;
-
-}
-
-
-
-.habit-header{
-
-align-items:flex-start;
-
-gap:10px;
-
-}
-
-
-
-.grass-grid{
-
-grid-template-columns:
-repeat(15,1fr);
-
-gap:4px;
-
-}
-
-
-
-.habit-card{
-
-padding:15px;
-
-}
-
-
-}
-
 </style>
-
 </head>
 
-
 <body>
-
-
 <div class="container">
+    <header>
+        <div class="logo">
+            <h1>🌿 HabitGrow</h1>
+            <p id="today-text"></p>
+        </div>
+        <div class="theme-selector">
+            <select id="theme-select">
+                <option value="github">GitHub Dark</option>
+                <option value="light">Modern Light</option>
+                <option value="pastel">Pastel Meadow</option>
+            </select>
+        </div>
+    </header>
 
+    <div class="add-habit-form">
+        <input id="habit-input" maxlength="50" placeholder="예: 물 2L 마시기, 운동하기">
+        <button class="primary-btn" id="add-btn">추가하기</button>
+    </div>
 
-<header>
+    <div style="display:flex; gap:10px; margin-bottom:20px;">
+        <button class="primary-btn" onclick="exportData()">📦 백업</button>
+        <label class="primary-btn" style="cursor:pointer; padding:12px 20px;">
+            📂 복원
+            <input type="file" accept=".json" hidden onchange="importData(event)">
+        </label>
+    </div>
 
+    <div id="habit-list" class="habits-container"></div>
 
-<div class="logo">
-
-<h1>🌿 HabitGrow</h1>
-
-<p id="today-text"></p>
-
+    <div class="modal-backdrop">
+        <div class="modal">
+            <h3>정말 삭제할까요?</h3>
+            <p>삭제하면 해당 습관 기록도 사라집니다.</p>
+            <button onclick="confirmDelete()">삭제</button>
+            <button onclick="closeModal()">취소</button>
+        </div>
+    </div>
 </div>
-
-
-<div class="theme-selector">
-
-
-<select id="theme-select">
-
-<option value="github">
-GitHub Dark
-</option>
-
-<option value="light">
-Modern Light
-</option>
-
-<option value="pastel">
-Pastel Meadow
-</option>
-
-</select>
-
-
-</div>
-
-
-</header>
-
-
-
-<div class="add-habit-form">
-
-<input
-
-id="habit-input"
-
-maxlength="50"
-
-placeholder="예: 물 2L 마시기, 운동하기"
-
-
-
->
-
-
-<button class="primary-btn" id="add-btn">
-
-추가하기
-
-</button>
-
-
-</div>
-
-<div style="
-display:flex;
-gap:10px;
-margin-bottom:20px;
-">
-
-
-<button
-class="primary-btn"
-onclick="exportData()"
->
-📦 백업
-</button>
-
-
-<label
-class="primary-btn"
-style="
-cursor:pointer;
-padding:12px 20px;
-"
->
-
-📂 복원
-
-<input
-type="file"
-accept=".json"
-hidden
-onchange="importData(event)"
->
-
-</label>
-
-
-</div>
-
-<div id="habit-list" class="habits-container"></div>
-
-<div class="modal-backdrop">
-
-<div class="modal">
-
-<h3>
-정말 삭제할까요?
-</h3>
-
-<p>
-삭제하면 해당 습관 기록도 사라집니다.
-</p>
-
-
-<button
-onclick="confirmDelete()"
->
-삭제
-</button>
-
-
-<button
-onclick="closeModal()"
->
-취소
-</button>
-
-
-</div>
-
-</div>
-
-
-</div>
-
-
 
 <script>
-
-
 // ==================================================
-// HabitGrow v2
 // Core Data System
 // ==================================================
-
-
-// ------------------------------
-// Storage
-// ------------------------------
-
 const STORAGE_KEY = "habitgrow_data_v2";
-
-
-
 let habits = loadData();
 
-
-
 function loadData(){
-
     try {
+        const oldData = localStorage.getItem("habitgrow_data");
+        const newData = localStorage.getItem(STORAGE_KEY);
 
-        const oldData =
-        localStorage.getItem("habitgrow_data");
-
-
-        const newData =
-        localStorage.getItem(STORAGE_KEY);
-
-
-
-        if(newData){
-
-            return JSON.parse(newData);
-
-        }
-
-
-
-        // 기존 버전 데이터 호환
-
+        if(newData) return JSON.parse(newData);
         if(oldData){
-
-            const converted =
-            JSON.parse(oldData);
-
-
-            localStorage.setItem(
-                STORAGE_KEY,
-                JSON.stringify(converted)
-            );
-
-
+            const converted = JSON.parse(oldData);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(converted));
             return converted;
-
         }
-
-
-
         return [];
-
-
     } catch(error){
-
-        console.error(
-            "데이터 로딩 오류",
-            error
-        );
-
+        console.error("데이터 로딩 오류", error);
         return [];
-
     }
-
 }
-
-
-
 
 function saveData(){
-
-    localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify(habits)
-    );
-
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(habits));
 }
 
-
-
 // ==================================================
-// Date System
-// 모든 날짜 KST 기준
+// Date System (KST)
 // ==================================================
-
-
 function getKSTDate(date=new Date()){
-
-
-    const koreaTime =
-    new Date(
-        date.getTime()
-        +
-        (9 * 60 * 60 * 1000)
-    );
-
-
-    return koreaTime
-    .toISOString()
-    .split("T")[0];
-
+    const koreaTime = new Date(date.getTime() + (9 * 60 * 60 * 1000));
+    return koreaTime.toISOString().split("T")[0];
 }
-
-
-
 
 function addDays(dateString, amount){
-
-
-    const date =
-    new Date(dateString);
-
-
-
-    date.setDate(
-        date.getDate()
-        +
-        amount
-    );
-
-
+    const date = new Date(dateString);
+    date.setDate(date.getDate() + amount);
     return getKSTDate(date);
-
 }
-
-
-
-
 
 function getLast30Days(){
-
-
     const result=[];
-
-
-    const today =
-    getKSTDate();
-
-
-
-    for(
-        let i=29;
-        i>=0;
-        i--
-    ){
-
-        result.push(
-            addDays(
-                today,
-                -i
-            )
-        );
-
+    const today = getKSTDate();
+    for(let i=29; i>=0; i--){
+        result.push(addDays(today, -i));
     }
-
-
     return result;
-
 }
-
-
-
 
 // ==================================================
 // Statistics
 // ==================================================
-
-
 function getCompletedCount(history){
-
-
-    return Object
-    .values(history)
-    .filter(Boolean)
-    .length;
-
-
+    return Object.values(history).filter(Boolean).length;
 }
-
-
-
 
 function calculateCurrentStreak(history){
-
-
     let streak=0;
-
-
-    let current =
-    getKSTDate();
-
-
-
-    while(
-        history[current]
-    ){
-
-
+    let current = getKSTDate();
+    while(history[current]){
         streak++;
-
-
-        current =
-        addDays(
-            current,
-            -1
-        );
-
+        current = addDays(current, -1);
     }
-
-
     return streak;
-
 }
-
-
-
 
 function calculateBestStreak(history){
-
-
-    const dates =
-    Object.keys(history)
-    .filter(
-        d=>history[d]
-    )
-    .sort();
-
-
-
-    let best=0;
-
-    let current=0;
-
-
-    let previous=null;
-
-
-
+    const dates = Object.keys(history).filter(d=>history[d]).sort();
+    let best=0, current=0, previous=null;
     dates.forEach(date=>{
-
-
-        if(
-            previous &&
-            addDays(
-                previous,
-                1
-            )===date
-        ){
-
+        if(previous && addDays(previous, 1)===date){
             current++;
-
-
         }else{
-
-
             current=1;
-
-
         }
-
-
-        if(current>best){
-
-            best=current;
-
-        }
-
-
+        if(current>best) best=current;
         previous=date;
-
-
     });
-
-
-
     return best;
-
 }
-
-
-
 
 function calculateSuccessRate(history){
-
-
-    const completed =
-    getCompletedCount(history);
-
-
-
-    if(
-        Object.keys(history).length===0
-    ){
-
-        return 0;
-
-    }
-
-
-    return Math.round(
-        completed /
-        Object.keys(history).length
-        *
-        100
-    );
-
-
+    const completed = getCompletedCount(history);
+    if(Object.keys(history).length===0) return 0;
+    return Math.round(completed / Object.keys(history).length * 100);
 }
-
-
-
 
 // ==================================================
 // Plant Growth
 // ==================================================
-
-
 function getPlantLevel(history){
-
-
-    const streak =
-    calculateCurrentStreak(history);
-
-
-
-    if(streak>=30)
-        return 5;
-
-
-    if(streak>=14)
-        return 4;
-
-
-    if(streak>=7)
-        return 3;
-
-
-    if(streak>=3)
-        return 2;
-
-
-    if(streak>=1)
-        return 1;
-
-
-
+    const streak = calculateCurrentStreak(history);
+    if(streak>=30) return 5;
+    if(streak>=14) return 4;
+    if(streak>=7) return 3;
+    if(streak>=3) return 2;
+    if(streak>=1) return 1;
     return 0;
-
-
 }
-
-
-
-
 
 function createPlant(history){
-
-    const level =
-    getPlantLevel(history);
-
-
-    const plant =
-    document.createElement("div");
-
-
-    plant.className =
-    "plant level" + level;
-
-
+    const level = getPlantLevel(history);
+    const plant = document.createElement("div");
+    plant.className = "plant level" + level;
     return plant;
-
 }
 
-
-
 // ==================================================
-// Habit Object
+// Habit Objects & UI
 // ==================================================
-
-
 function createHabit(title){
-
-
-    return {
-
-        id:
-        Date.now()
-        .toString(),
-
-
-        title,
-
-
-        history:{},
-
-
-        createdAt:
-        getKSTDate()
-
-
-    };
-
-
+    return { id: Date.now().toString(), title, history:{}, createdAt: getKSTDate() };
 }
-// ==================================================
-// UI Elements
-// ==================================================
 
-
-const habitList =
-document.getElementById(
-    "habit-list"
-);
-
-
-const habitInput =
-document.getElementById(
-    "habit-input"
-);
-
-
-const addButton =
-document.getElementById(
-    "add-btn"
-);
-
-
-
-const themeSelect =
-document.getElementById(
-    "theme-select"
-);
-
-
-
-
-// ==================================================
-// Add Habit
-// ==================================================
-
+const habitList = document.getElementById("habit-list");
+const habitInput = document.getElementById("habit-input");
+const addButton = document.getElementById("add-btn");
+const themeSelect = document.getElementById("theme-select");
 
 function addHabit(){
-
-
-    const title =
-    habitInput.value.trim();
-
-
-
-    if(!title){
-
-        alert(
-            "습관을 입력해주세요."
-        );
-
-        return;
-
-    }
-
-
-
-    const duplicated =
-    habits.some(
-        h=>h.title===title
-    );
-
-
-
-    if(duplicated){
-
-        alert(
-            "이미 존재하는 습관입니다."
-        );
-
-        return;
-
-    }
-
-
-
-    habits.unshift(
-        createHabit(title)
-    );
-
-
-
+    const title = habitInput.value.trim();
+    if(!title){ alert("습관을 입력해주세요."); return; }
+    if(habits.some(h=>h.title===title)){ alert("이미 존재하는 습관입니다."); return; }
+    
+    habits.unshift(createHabit(title));
     saveData();
-
-
     habitInput.value="";
-
-
     render();
-
 }
 
+addButton.addEventListener("click", addHabit);
+habitInput.addEventListener("keydown", e=>{ if(e.key==="Enter") addHabit(); });
 
-
-
-addButton.addEventListener(
-    "click",
-    addHabit
-);
-
-
-
-habitInput.addEventListener(
-    "keydown",
-    e=>{
-
-
-        if(e.key==="Enter"){
-
-            addHabit();
-
-        }
-
-
-    }
-);
-
-
-
-
-
-// ==================================================
-// Toggle Day
-// ==================================================
-
-
-function toggleDay(
-    habitId,
-    date
-){
-
-
-    const habit =
-    habits.find(
-        h=>h.id===habitId
-    );
-
-
-
-    if(!habit)
-        return;
-
-
-
-    if(
-        habit.history[date]
-    ){
-
+function toggleDay(habitId, date){
+    const habit = habits.find(h=>h.id===habitId);
+    if(!habit) return;
+    
+    if(habit.history[date]){
         delete habit.history[date];
-
-
     }else{
-
-
         habit.history[date]=true;
-
-
     }
-
-
-
     saveData();
-
-
     render();
-
 }
 
-
-
-
-
 // ==================================================
-// Delete Habit
+// Delete Habit & Modals
 // ==================================================
-
-
 let deleteTarget=null;
 
-
-
 function deleteHabit(id){
-
-
     deleteTarget=id;
-
-
-    const modal =
-    document.querySelector(
-        ".modal-backdrop"
-    );
-
-
-    if(modal){
-
-        modal.style.display=
-        "flex";
-
-    }
-
-
+    const modal = document.querySelector(".modal-backdrop");
+    if(modal) modal.style.display="flex";
 }
-
-
-
-
 
 function confirmDelete(){
-
-
-    habits =
-    habits.filter(
-        h=>
-        h.id!==deleteTarget
-    );
-
-
-
+    habits = habits.filter(h=>h.id!==deleteTarget);
     saveData();
-
-
     closeModal();
-
-
     render();
-
-
 }
-
-
-
-
 
 function closeModal(){
-
-
-    const modal =
-    document.querySelector(
-        ".modal-backdrop"
-    );
-
-
-    if(modal){
-
-        modal.style.display=
-        "none";
-
-    }
-
-
+    const modal = document.querySelector(".modal-backdrop");
+    if(modal) modal.style.display="none";
 }
 
-
-
-
 // ==================================================
-// Render Habit Card
+// Render
 // ==================================================
-
-
 function render(){
-
-
     habitList.innerHTML="";
-
-
-
-    if(
-        habits.length===0
-    ){
-
-
-        habitList.innerHTML=
-        `
-
-        <div class="habit-card">
-
-        <h3>
-        🌱 아직 심은 습관이 없습니다.
-        </h3>
-
-        <p>
-        새로운 습관을 추가해서
-        나만의 정원을 만들어보세요.
-        </p>
-
-        </div>
-
-        `;
-
-
+    if(habits.length===0){
+        habitList.innerHTML=`
+        <div class="habit-card" style="text-align:center; padding:40px;">
+            <h3 style="margin-bottom:10px;">🌱 아직 심은 습관이 없습니다.</h3>
+            <p style="color:var(--text-muted);">새로운 습관을 추가해서 나만의 정원을 만들어보세요.</p>
+        </div>`;
         return;
-
     }
 
+    habits.forEach(habit=>{
+        const card = document.createElement("div");
+        card.className="habit-card";
+        const current = calculateCurrentStreak(habit.history);
+        const best = calculateBestStreak(habit.history);
+        const total = getCompletedCount(habit.history);
+        const rate = calculateSuccessRate(habit.history);
 
-
-
-    habits.forEach(
-        habit=>{
-
-
-        const card =
-        document.createElement(
-            "div"
-        );
-
-
-
-        card.className=
-        "habit-card";
-
-
-
-        const current =
-        calculateCurrentStreak(
-            habit.history
-        );
-
-
-
-        const best =
-        calculateBestStreak(
-            habit.history
-        );
-
-
-
-        const total =
-        getCompletedCount(
-            habit.history
-        );
-
-
-
-        const rate =
-        calculateSuccessRate(
-            habit.history
-        );
-
-
-
-        card.innerHTML=
-        `
-
+        card.innerHTML=`
         <div class="habit-header">
-
             <div>
-
-            <div class="habit-title">
-            ${escapeHTML(habit.title)}
+                <div class="habit-title">${escapeHTML(habit.title)}</div>
+                <div class="stats">
+                    <div class="stat">🔥 ${current}일 연속</div>
+                    <div class="stat">🏆 최장 ${best}일</div>
+                    <div class="stat">🌱 총 ${total}회</div>
+                    <div class="stat">📈 달성률 ${rate}%</div>
+                </div>
             </div>
-
-
-            <div class="stats">
-
-                <div class="stat">
-                🔥 ${current}일
-                </div>
-
-                <div class="stat">
-                🏆 ${best}일
-                </div>
-
-                <div class="stat">
-                🌱 ${total}회
-                </div>
-
-                <div class="stat">
-                📈 ${rate}%
-                </div>
-
-            </div>
-
-
-            </div>
-
-
-            <button
-            class="delete-btn"
-            onclick="
-            deleteHabit('${habit.id}')
-            "
-            >
-
-            삭제
-
-            </button>
-
-
+            <button class="delete-btn" onclick="deleteHabit('${habit.id}')">삭제</button>
         </div>
-
-
         <div class="grass-grid"></div>
-
         `;
 
-
-
-
-        const grid =
-        card.querySelector(
-            ".grass-grid"
-        );
-
-
-
-        createGrassGrid(
-            grid,
-            habit
-        );
-
-
-
-        habitList.appendChild(
-            card
-        );
-
-
+        const grid = card.querySelector(".grass-grid");
+        createGrassGrid(grid, habit);
+        habitList.appendChild(card);
     });
-
-
 }
 
-
-
-
-
-// ==================================================
-// Grass Grid
-// ==================================================
-
-
-function createGrassGrid(
-    grid,
-    habit
-){
-
-
-    const dates =
-    getLast30Days();
-
-
-
-    dates.forEach(
-        date=>{
-
-
-        const cell =
-        document.createElement(
-            "div"
-        );
-
-
-        cell.className=
-        "day-cell";
-
-
-
-        if(
-            habit.history[date]
-        ){
-
-            cell.classList.add(
-                "completed"
-            );
-
-
-            const plant =
-            createPlant(
-                habit.history
-            );
-
-
-            if(plant){
-
-                cell.appendChild(
-                    plant
-                );
-
-            }
-
+function createGrassGrid(grid, habit){
+    const dates = getLast30Days();
+    dates.forEach(date=>{
+        const cell = document.createElement("div");
+        cell.className="day-cell";
+        
+        if(habit.history[date]){
+            cell.classList.add("completed");
+            const plant = createPlant(habit.history);
+            if(plant) cell.appendChild(plant);
         }
-
-
-
+        
         cell.title=date;
-
-
-
-        cell.addEventListener(
-            "click",
-            ()=>{
-
-                toggleDay(
-                    habit.id,
-                    date
-                );
-
-            }
-        );
-
-
-
-        grid.appendChild(
-            cell
-        );
-
-
+        cell.addEventListener("click", ()=>toggleDay(habit.id, date));
+        grid.appendChild(cell);
     });
-
-
 }
-
-
-
-
-
-// ==================================================
-// Escape HTML
-// ==================================================
-
 
 function escapeHTML(str){
-
-
-    return str
-    .replace(
-        /[&<>"']/g,
-        char=>({
-
-            "&":"&amp;",
-            "<":"&lt;",
-            ">":"&gt;",
-            '"':"&quot;",
-            "'":"&#039;"
-
-        })[char]
-    );
-
-
+    return str.replace(/[&<>"']/g, char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"})[char]);
 }
 
-
-
-
-
 // ==================================================
-// Theme
+// Theme Management
 // ==================================================
-
-
-themeSelect.addEventListener(
-    "change",
-    ()=>{
-
-
-    const theme =
-    themeSelect.value;
-
-
-
-    document.documentElement
-    .setAttribute(
-        "data-theme",
-        theme
-    );
-
-
-    localStorage.setItem(
-        "habitgrow_theme",
-        theme
-    );
-
-
-    }
-);
-
-
+themeSelect.addEventListener("change", ()=>{
+    const theme = themeSelect.value;
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("habitgrow_theme", theme);
+});
 
 function loadTheme(){
-
-
-    const theme =
-    localStorage.getItem(
-        "habitgrow_theme"
-    )
-    ||
-    "github";
-
-
-
-    document.documentElement
-    .setAttribute(
-        "data-theme",
-        theme
-    );
-
-
-
+    const theme = localStorage.getItem("habitgrow_theme") || "github";
+    document.documentElement.setAttribute("data-theme", theme);
     themeSelect.value=theme;
-
-
 }
+
 // ==================================================
 // Backup / Restore
 // ==================================================
-
-
 function exportData(){
-
-
-    const blob =
-    new Blob(
-        [
-            JSON.stringify(
-                habits,
-                null,
-                2
-            )
-        ],
-        {
-            type:
-            "application/json"
-        }
-    );
-
-
-
-    const url =
-    URL.createObjectURL(
-        blob
-    );
-
-
-
-    const a =
-    document.createElement(
-        "a"
-    );
-
-
+    const blob = new Blob([JSON.stringify(habits, null, 2)], {type: "application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
     a.href=url;
-
-
-    a.download=
-    "HabitGrow_backup.json";
-
-
+    a.download="HabitGrow_backup.json";
     a.click();
-
-
-
     URL.revokeObjectURL(url);
-
-
 }
-
-
-
 
 function importData(event){
-
-
-    const file =
-    event.target.files[0];
-
-
-    if(!file)
-        return;
-
-
-
-    const reader =
-    new FileReader();
-
-
-
-    reader.onload=
-    function(e){
-
-
+    const file = event.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e){
         try{
-
-
-            const data =
-            JSON.parse(
-                e.target.result
-            );
-
-
-            if(
-                Array.isArray(data)
-            ){
-
-
+            const data = JSON.parse(e.target.result);
+            if(Array.isArray(data)){
                 habits=data;
-
-
                 saveData();
-
-
                 render();
-
-
-                alert(
-                    "복원이 완료되었습니다."
-                );
-
+                alert("복원이 완료되었습니다.");
             }
-
-
         }catch(error){
-
-
-            alert(
-                "올바른 백업 파일이 아닙니다."
-            );
-
-
+            alert("올바른 백업 파일이 아닙니다.");
         }
-
-
     };
-
-
     reader.readAsText(file);
-
-
 }
 
-
-
-
 // ==================================================
-// Initial Start
+// Init
 // ==================================================
-
-
 function init(){
-
-
-    document
-    .getElementById(
-        "today-text"
-    )
-    .textContent =
-    `오늘은 ${getKSTDate()} 입니다. 나만의 정원을 키워보세요 🌱`;
-
-
-
+    document.getElementById("today-text").textContent = `오늘은 ${getKSTDate()} 입니다. 나만의 정원을 키워보세요 🌱`;
     loadTheme();
-
-
     render();
-
-
 }
-
-
 
 init();
-
-.plant {
-
-    position:absolute;
-
-    inset:0;
-
-    display:flex;
-
-    justify-content:center;
-
-    align-items:center;
-
-    font-size:22px;
-
-    animation:
-    growPlant .4s ease;
-
-}
-
-
-.plant.level1::before {
-    content:"🌱";
-}
-
-
-.plant.level2::before {
-    content:"🌿";
-}
-
-
-.plant.level3::before {
-    content:"🌳";
-}
-
-
-.plant.level4::before {
-    content:"🌲";
-}
-
-
-.plant.level5::before {
-    content:"🌴";
-}
-
-
-
 </script>
-
-
 </body>
-
 </html>
