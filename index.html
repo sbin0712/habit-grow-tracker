@@ -19,43 +19,40 @@
     background: transparent;
 }
 
-/* 식물 */
+/* 식물 (이모지 중앙 정렬 및 애니메이션) */
 .plant {
-    position:absolute;
-    width:130%;
-    height:130%;
-    left:-15%;
-    bottom:-5%;
-    display:block;
-    z-index:5;
-    pointer-events:none;
-    background-repeat:no-repeat;
-    background-position: bottom center;
-    background-size: contain;
-    transform-origin: bottom center;
+    position: absolute;
+    inset: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 24px; /* 식물 크기 */
+    z-index: 5;
+    pointer-events: none;
     animation: growPlant .45s cubic-bezier(.175, .885, .32, 1.275);
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)); /* 약간의 그림자 추가 */
 }
 
 /* 성장 애니메이션 */
 @keyframes growPlant {
-    0% { transform: scale(.1) translateY(20px); opacity:0; }
-    60% { transform: scale(1.15) translateY(-5px); opacity:1; }
+    0% { transform: scale(.1) translateY(10px); opacity:0; }
+    60% { transform: scale(1.2) translateY(-2px); opacity:1; }
     100% { transform: scale(1) translateY(0); }
 }
 
 /* ==================================================
-   Plant Levels
-   1~2  새싹
-   3~6  잔디
-   7~13 풍성
-   14~29 꽃
-   30+ 나무
+   Plant Levels (이모지 시스템)
+   1~2일: 새싹
+   3~6일: 잔디
+   7~13일: 나무
+   14~29일: 소나무
+   30일+: 야자수
 ================================================== */
-.level1 { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 90 Q40 55 50 25 Q60 55 50 90' fill='%2365a30d'/%3E%3Cpath d='M50 90 Q60 65 75 55 Q65 80 50 90' fill='%2384cc16'/%3E%3Ccircle cx='50' cy='92' r='8' fill='%23a16207'/%3E%3C/svg%3E"); }
-.level2 { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='90' r='12' fill='%239a3412'/%3E%3Cpath d='M50 90 C20 50 35 20 50 10' stroke='%2365a30d' stroke-width='10' fill='none'/%3E%3Cpath d='M50 80 C80 50 75 30 60 20' stroke='%2384cc16' stroke-width='8' fill='none'/%3E%3C/svg%3E"); }
-.level3 { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='90' r='14' fill='%237c2d12'/%3E%3Cpath d='M50 85 Q20 45 35 15' stroke='%2365a30d' stroke-width='12' fill='none'/%3E%3Cpath d='M50 85 Q70 40 85 25' stroke='%2384cc16' stroke-width='12' fill='none'/%3E%3Cpath d='M50 85 Q50 35 50 10' stroke='%234d7c0f' stroke-width='10' fill='none'/%3E%3C/svg%3E"); }
-.level4 { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='90' r='15' fill='%2392462f'/%3E%3Cpath d='M50 85 Q20 30 50 10' stroke='%2365a30d' stroke-width='14' fill='none'/%3E%3Cpath d='M50 85 Q80 30 50 10' stroke='%2384cc16' stroke-width='14' fill='none'/%3E%3Ccircle cx='50' cy='18' r='8' fill='%23facc15'/%3E%3C/svg%3E"); }
-.level5 { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect x='43' y='55' width='14' height='35' fill='%2392462f'/%3E%3Ccircle cx='50' cy='40' r='32' fill='%2365a30d'/%3E%3Ccircle cx='30' cy='35' r='18' fill='%2384cc16'/%3E%3Ccircle cx='70' cy='35' r='18' fill='%234d7c0f'/%3E%3C/svg%3E"); }
+.plant.level1::before { content: "🌱"; }
+.plant.level2::before { content: "🌿"; }
+.plant.level3::before { content: "🌳"; }
+.plant.level4::before { content: "🌲"; }
+.plant.level5::before { content: "🌴"; }
 
 /* ==================================================
    Modal 준비
@@ -67,9 +64,9 @@
 /* ==================================================
    Theme System
 ================================================== */
-:root[data-theme="github"] { --bg-color:#0d1117; --card-bg:#161b22; --text-main:#c9d1d9; --text-muted:#8b949e; --border:#30363d; --primary:#2ea043; --primary-hover:#238636; --soil:#302014; --grass:#2ea043; }
-:root[data-theme="light"] { --bg-color:#f3f4f6; --card-bg:#ffffff; --text-main:#1f2937; --text-muted:#6b7280; --border:#e5e7eb; --primary:#3b82f6; --primary-hover:#2563eb; --soil:#d6b38a; --grass:#60a5fa; }
-:root[data-theme="pastel"] { --bg-color:#fffbeb; --card-bg:#ffffff; --text-main:#451a03; --text-muted:#78350f; --border:#fde68a; --primary:#f59e0b; --primary-hover:#d97706; --soil:#c08457; --grass:#86efac; }
+:root[data-theme="github"] { --bg-color:#0d1117; --card-bg:#161b22; --text-main:#c9d1d9; --text-muted:#8b949e; --border:#30363d; --primary:#2ea043; --primary-hover:#238636; }
+:root[data-theme="light"] { --bg-color:#f3f4f6; --card-bg:#ffffff; --text-main:#1f2937; --text-muted:#6b7280; --border:#e5e7eb; --primary:#3b82f6; --primary-hover:#2563eb; }
+:root[data-theme="pastel"] { --bg-color:#fffbeb; --card-bg:#ffffff; --text-main:#451a03; --text-muted:#78350f; --border:#fde68a; --primary:#f59e0b; --primary-hover:#d97706; }
 
 /* ==================================================
    Reset & Layout
@@ -107,7 +104,8 @@ header { display:flex; justify-content:space-between; align-items:center; paddin
 ================================================== */
 .grass-grid { display:grid; grid-template-columns: repeat(15,1fr); gap:5px; }
 @media(min-width:600px){ .grass-grid { grid-template-columns: repeat(30,1fr); gap:6px; } }
-.day-cell { aspect-ratio:1; position:relative; border-radius:5px; background: var(--border); cursor:pointer; overflow:hidden; transition:.2s; }
+/* overflow: hidden 제거하여 이모지가 잘리지 않게 함 */
+.day-cell { aspect-ratio:1; position:relative; border-radius:5px; background: var(--border); cursor:pointer; transition:.2s; }
 .day-cell:hover { transform: translateY(-2px); }
 
 /* ==================================================
@@ -121,6 +119,7 @@ header { display:flex; justify-content:space-between; align-items:center; paddin
     .habit-header { align-items:flex-start; gap:10px; }
     .grass-grid { grid-template-columns: repeat(15,1fr); gap:4px; }
     .habit-card { padding:15px; }
+    .plant { font-size: 18px; } /* 모바일에서 이모지 크기 조정 */
 }
 </style>
 </head>
@@ -229,7 +228,6 @@ function calculateCurrentStreak(history){
     let streak=0;
     let current = getKSTDate();
     
-    // [버그 수정 1] 오늘을 아직 체크 안 했더라도, 어제 체크했다면 연속 달성(스트릭)이 끊기지 않게 유지합니다.
     if(!history[current]){
         current = addDays(current, -1);
     }
@@ -271,7 +269,6 @@ function getPlantLevel(history){
     if(streak>=14) return 4;
     if(streak>=7) return 3;
     if(streak>=3) return 2;
-    // [버그 수정 2] 완료된 식물은 무조건 최소 레벨 1(새싹)부터 시작하도록 보장하여 투명해지는 현상 방지
     return 1; 
 }
 
