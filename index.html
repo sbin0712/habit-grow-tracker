@@ -3,24 +3,32 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HabitGrow v3 - 나만의 성장형 습관 트래커</title>
+<title>HabitGrow v4 - 완벽한 개별 애니메이션 트래커</title>
 <style>
 /* ==================================================
    Growing Grass System
 ================================================== */
 
-/* 빈 땅 */
-.day-cell.empty {
-    background: linear-gradient(145deg, rgba(255,255,255,.05), rgba(0,0,0,.2)), var(--border);
+/* 빈 땅 (입체감 추가) */
+.day-cell { 
+    aspect-ratio: 1; 
+    position: relative; 
+    border-radius: 5px; 
+    background: var(--border); 
+    cursor: pointer; 
+    transition: transform 0.1s ease;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.15); 
 }
+.day-cell:hover { transform: translateY(-2px); }
 
-/* 심어진 상태 */
+/* 심어진 땅 */
 .day-cell.completed {
     background: transparent;
+    box-shadow: none;
 }
 
-/* 식물 기본 설정 (애니메이션 제거) */
-.plant {
+/* 🌿 식물 이모지 공통 스타일 */
+.sprout-emoji {
     position: absolute;
     inset: 0;
     display: flex;
@@ -30,32 +38,33 @@
     z-index: 5;
     pointer-events: none;
     filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3));
+    transition: all 0.3s ease; /* 레벨업 할 때 부드럽게 변하도록 */
 }
 
-/* 방금 클릭한 칸에만 적용될 성장 애니메이션 클래스 */
-.plant.animate {
-    animation: growPlant .45s cubic-bezier(.175, .885, .32, 1.275);
+/* 🎯 방금 클릭한 칸에만 적용될 팝(Pop) 애니메이션 */
+.sprout-emoji.animate-pop {
+    animation: popSprout 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-@keyframes growPlant {
-    0% { transform: scale(.1) translateY(10px); opacity:0; }
-    60% { transform: scale(1.2) translateY(-2px); opacity:1; }
-    100% { transform: scale(1) translateY(0); }
+@keyframes popSprout {
+    0% { transform: scale(0.1) translateY(15px); opacity: 0; }
+    60% { transform: scale(1.3) translateY(-3px); opacity: 1; }
+    100% { transform: scale(1) translateY(0); opacity: 1; }
 }
 
 /* ==================================================
-   Plant Levels (이모지 시스템)
-   1~2일: 새싹
-   3~6일: 잔디
-   7~13일: 나무
-   14~29일: 소나무
-   30일+: 야자수
+   Plant Levels (빠른 확인을 위해 허들 낮춤!)
+   1일: 새싹 (🌱)
+   2일: 잔디 (🌿)
+   3~4일: 나무 (🌳)
+   5~6일: 소나무 (🌲)
+   7일 이상: 야자수 (🌴)
 ================================================== */
-.plant.level1::before { content: "🌱"; }
-.plant.level2::before { content: "🌿"; }
-.plant.level3::before { content: "🌳"; }
-.plant.level4::before { content: "🌲"; }
-.plant.level5::before { content: "🌴"; }
+.sprout-emoji.level1::before { content: "🌱"; }
+.sprout-emoji.level2::before { content: "🌿"; }
+.sprout-emoji.level3::before { content: "🌳"; }
+.sprout-emoji.level4::before { content: "🌲"; }
+.sprout-emoji.level5::before { content: "🌴"; }
 
 /* ==================================================
    Modal 준비
@@ -107,8 +116,6 @@ header { display:flex; justify-content:space-between; align-items:center; paddin
 ================================================== */
 .grass-grid { display:grid; grid-template-columns: repeat(15,1fr); gap:5px; }
 @media(min-width:600px){ .grass-grid { grid-template-columns: repeat(30,1fr); gap:6px; } }
-.day-cell { aspect-ratio:1; position:relative; border-radius:5px; background: var(--border); cursor:pointer; transition:.2s; }
-.day-cell:hover { transform: translateY(-2px); }
 
 /* ==================================================
   Mobile
@@ -121,7 +128,7 @@ header { display:flex; justify-content:space-between; align-items:center; paddin
     .habit-header { align-items:flex-start; gap:10px; }
     .grass-grid { grid-template-columns: repeat(15,1fr); gap:4px; }
     .habit-card { padding:15px; }
-    .plant { font-size: 18px; }
+    .sprout-emoji { font-size: 18px; } 
 }
 </style>
 </head>
@@ -171,23 +178,15 @@ header { display:flex; justify-content:space-between; align-items:center; paddin
 // ==================================================
 // Core Data System
 // ==================================================
-const STORAGE_KEY = "habitgrow_data_v2";
+const STORAGE_KEY = "habitgrow_data_v4";
 let habits = loadData();
 
 function loadData(){
     try {
-        const oldData = localStorage.getItem("habitgrow_data");
-        const newData = localStorage.getItem(STORAGE_KEY);
-
-        if(newData) return JSON.parse(newData);
-        if(oldData){
-            const converted = JSON.parse(oldData);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(converted));
-            return converted;
-        }
+        const data = localStorage.getItem(STORAGE_KEY) || localStorage.getItem("habitgrow_data_v2") || localStorage.getItem("habitgrow_data");
+        if(data) return JSON.parse(data);
         return [];
     } catch(error){
-        console.error("데이터 로딩 오류", error);
         return [];
     }
 }
@@ -197,7 +196,7 @@ function saveData(){
 }
 
 // ==================================================
-// Date System (안전한 날짜 연산)
+// Date System 
 // ==================================================
 function getKSTDate(){
     const koreaTime = new Date(new Date().getTime() + (9 * 60 * 60 * 1000));
@@ -206,7 +205,7 @@ function getKSTDate(){
 
 function addDays(dateString, amount){
     const parts = dateString.split('-');
-    const date = new Date(parts[0], parts[1] - 1, parts[2]); // 로컬 자정 기준
+    const date = new Date(parts[0], parts[1] - 1, parts[2]); 
     date.setDate(date.getDate() + amount);
     
     const yy = date.getFullYear();
@@ -221,24 +220,18 @@ function getLast30Days(){
     for(let i=29; i>=0; i--){
         result.push(addDays(today, -i));
     }
-    return result;
+    return result; // [29일전, 28일전, ..., 어제, 오늘] 순서
 }
 
 // ==================================================
 // Statistics
 // ==================================================
-function getCompletedCount(history){
-    return Object.values(history).filter(Boolean).length;
-}
+function getCompletedCount(history){ return Object.values(history).filter(Boolean).length; }
 
 function calculateCurrentStreak(history){
-    let streak=0;
+    let streak = 0;
     let current = getKSTDate();
-    
-    if(!history[current]){
-        current = addDays(current, -1);
-    }
-    
+    if(!history[current]) current = addDays(current, -1);
     while(history[current]){
         streak++;
         current = addDays(current, -1);
@@ -250,11 +243,8 @@ function calculateBestStreak(history){
     const dates = Object.keys(history).filter(d=>history[d]).sort();
     let best=0, current=0, previous=null;
     dates.forEach(date=>{
-        if(previous && addDays(previous, 1)===date){
-            current++;
-        }else{
-            current=1;
-        }
+        if(previous && addDays(previous, 1)===date) { current++; }
+        else { current=1; }
         if(current>best) best=current;
         previous=date;
     });
@@ -268,12 +258,12 @@ function calculateSuccessRate(history){
 }
 
 // ==================================================
-// Plant Growth (해당 날짜 기준의 스트릭 계산)
+// Plant Growth (특정 날짜 기준 연속일수 계산)
 // ==================================================
-// 특정 날짜(dateStr)를 기준으로 과거로 연속된 일수를 계산하여 레벨을 결정합니다!
 function getStreakAtDate(history, dateStr) {
     let streak = 0;
     let current = dateStr;
+    // 클릭한 날짜부터 과거로 며칠이나 연속으로 했는지 체크합니다.
     while(history[current]) {
         streak++;
         current = addDays(current, -1);
@@ -283,18 +273,11 @@ function getStreakAtDate(history, dateStr) {
 
 function getPlantLevel(history, dateStr){
     const streak = getStreakAtDate(history, dateStr);
-    if(streak>=30) return 5;
-    if(streak>=14) return 4;
-    if(streak>=7)  return 3;
-    if(streak>=3)  return 2;
-    return 1; 
-}
-
-function createPlant(history, dateStr){
-    const level = getPlantLevel(history, dateStr);
-    const plant = document.createElement("div");
-    plant.className = "plant level" + level;
-    return plant;
+    if(streak >= 7) return 5; // 7일 연속 = 야자수🌴
+    if(streak >= 5) return 4; // 5일 연속 = 소나무🌲
+    if(streak >= 3) return 3; // 3일 연속 = 나무🌳
+    if(streak >= 2) return 2; // 2일 연속 = 잔디🌿
+    return 1;                 // 1일 (첫 체크) = 새싹🌱
 }
 
 // ==================================================
@@ -306,81 +289,125 @@ function createHabit(title){
 
 const habitList = document.getElementById("habit-list");
 const habitInput = document.getElementById("habit-input");
-const addButton = document.getElementById("add-btn");
-const themeSelect = document.getElementById("theme-select");
+
+document.getElementById("add-btn").addEventListener("click", addHabit);
+habitInput.addEventListener("keydown", e=>{ if(e.key==="Enter") addHabit(); });
 
 function addHabit(){
     const title = habitInput.value.trim();
     if(!title){ alert("습관을 입력해주세요."); return; }
     if(habits.some(h=>h.title===title)){ alert("이미 존재하는 습관입니다."); return; }
-    
     habits.unshift(createHabit(title));
     saveData();
     habitInput.value="";
-    render();
+    renderFull(); // 새 습관 추가시에만 전체 렌더링
 }
 
-addButton.addEventListener("click", addHabit);
-habitInput.addEventListener("keydown", e=>{ if(e.key==="Enter") addHabit(); });
-
 // ==================================================
-// Toggle Day
+// Toggle Day (핵심: 전체 리렌더링 제거, 핀셋 업데이트)
 // ==================================================
 function toggleDay(habitId, date){
     const habit = habits.find(h=>h.id===habitId);
     if(!habit) return;
     
-    if(habit.history[date]){
-        delete habit.history[date];
-    }else{
-        habit.history[date]=true;
-    }
+    // 데이터 토글
+    if(habit.history[date]){ delete habit.history[date]; }
+    else{ habit.history[date]=true; }
     saveData();
     
-    // 재렌더링 시, 클릭한 요소에만 애니메이션을 주기 위해 정보를 넘겨줍니다.
-    render(habitId, date);
+    // 화면 전체를 다시 그리지 않고, 해당 습관 카드만 조심스럽게 업데이트합니다.
+    updateHabitCard(habitId, date);
+}
+
+// 딱 필요한 부분(클릭된 습관의 통계 및 잔디)만 갱신하는 함수
+function updateHabitCard(habitId, clickedDate) {
+    const habit = habits.find(h => h.id === habitId);
+    const card = document.querySelector(`.habit-card[data-id="${habitId}"]`);
+    if(!card) return;
+
+    // 1. 통계 텍스트 업데이트
+    const current = calculateCurrentStreak(habit.history);
+    const best = calculateBestStreak(habit.history);
+    const total = getCompletedCount(habit.history);
+    const rate = calculateSuccessRate(habit.history);
+
+    card.querySelector('.stat-current').innerText = `🔥 ${current}일 연속`;
+    card.querySelector('.stat-best').innerText = `🏆 최장 ${best}일`;
+    card.querySelector('.stat-total').innerText = `🌱 총 ${total}회`;
+    card.querySelector('.stat-rate').innerText = `📈 달성률 ${rate}%`;
+
+    // 2. 잔디(그리드) 개별 칸 업데이트
+    const cells = card.querySelectorAll('.day-cell');
+    cells.forEach(cell => {
+        const date = cell.getAttribute('data-date');
+        const isCompleted = habit.history[date];
+        const existingPlant = cell.querySelector('.sprout-emoji');
+
+        if (isCompleted) {
+            cell.classList.add('completed');
+            const level = getPlantLevel(habit.history, date);
+            const targetClassName = `sprout-emoji level${level}`;
+
+            if (existingPlant) {
+                // 이미 식물이 있는데 레벨이 변했다면 클래스만 변경 (부드럽게 바뀜)
+                existingPlant.className = targetClassName;
+            } else {
+                // 식물이 없었다면 새로 생성해서 꽂아줌
+                const plant = document.createElement('div');
+                plant.className = targetClassName;
+                // 방금 클릭한 그 칸에만 팝(Pop) 애니메이션 부여!
+                if (date === clickedDate) {
+                    plant.classList.add('animate-pop');
+                }
+                cell.appendChild(plant);
+            }
+        } else {
+            // 체크 해제된 칸 처리
+            cell.classList.remove('completed');
+            if (existingPlant) {
+                existingPlant.remove();
+            }
+        }
+    });
 }
 
 // ==================================================
 // Delete Habit & Modals
 // ==================================================
 let deleteTarget=null;
-
 function deleteHabit(id){
     deleteTarget=id;
     const modal = document.querySelector(".modal-backdrop");
     if(modal) modal.style.display="flex";
 }
-
 function confirmDelete(){
     habits = habits.filter(h=>h.id!==deleteTarget);
     saveData();
     closeModal();
-    render();
+    renderFull();
 }
-
 function closeModal(){
     const modal = document.querySelector(".modal-backdrop");
     if(modal) modal.style.display="none";
 }
 
 // ==================================================
-// Render (클릭된 요소 정보 받기)
+// Full Render (초기 로딩 시 1회만 실행됨)
 // ==================================================
-function render(clickedHabitId = null, clickedDate = null){
+function renderFull(){
     habitList.innerHTML="";
     if(habits.length===0){
-        habitList.innerHTML=`
-        <div class="habit-card" style="text-align:center; padding:40px;">
-            <h3 style="margin-bottom:10px;">🌱 아직 심은 습관이 없습니다.</h3>
-            <p style="color:var(--text-muted);">새로운 습관을 추가해서 나만의 정원을 만들어보세요.</p>
-        </div>`;
+        habitList.innerHTML=`<div class="habit-card" style="text-align:center; padding:40px;"><h3 style="margin-bottom:10px;">🌱 아직 심은 습관이 없습니다.</h3><p style="color:var(--text-muted);">새로운 습관을 추가해서 나만의 정원을 만들어보세요.</p></div>`;
         return;
     }
+
+    const dates = getLast30Days();
 
     habits.forEach(habit=>{
         const card = document.createElement("div");
         card.className="habit-card";
+        card.setAttribute("data-id", habit.id); // 업데이트를 위해 ID 부여
+        
         const current = calculateCurrentStreak(habit.history);
         const best = calculateBestStreak(habit.history);
         const total = getCompletedCount(habit.history);
@@ -391,10 +418,10 @@ function render(clickedHabitId = null, clickedDate = null){
             <div>
                 <div class="habit-title">${escapeHTML(habit.title)}</div>
                 <div class="stats">
-                    <div class="stat">🔥 ${current}일 연속</div>
-                    <div class="stat">🏆 최장 ${best}일</div>
-                    <div class="stat">🌱 총 ${total}회</div>
-                    <div class="stat">📈 달성률 ${rate}%</div>
+                    <div class="stat stat-current">🔥 ${current}일 연속</div>
+                    <div class="stat stat-best">🏆 최장 ${best}일</div>
+                    <div class="stat stat-total">🌱 총 ${total}회</div>
+                    <div class="stat stat-rate">📈 달성률 ${rate}%</div>
                 </div>
             </div>
             <button class="delete-btn" onclick="deleteHabit('${habit.id}')">삭제</button>
@@ -403,32 +430,27 @@ function render(clickedHabitId = null, clickedDate = null){
         `;
 
         const grid = card.querySelector(".grass-grid");
-        createGrassGrid(grid, habit, clickedHabitId, clickedDate);
-        habitList.appendChild(card);
-    });
-}
-
-function createGrassGrid(grid, habit, clickedHabitId, clickedDate){
-    const dates = getLast30Days();
-    dates.forEach(date=>{
-        const cell = document.createElement("div");
-        cell.className="day-cell";
         
-        if(habit.history[date]){
-            cell.classList.add("completed");
-            const plant = createPlant(habit.history, date);
+        // 30일치 칸 생성 (초기 렌더링 시에는 애니메이션 없음)
+        dates.forEach(date=>{
+            const cell = document.createElement("div");
+            cell.className="day-cell";
+            cell.setAttribute("data-date", date);
             
-            // 방금 사용자가 클릭한 바로 그 칸에만 애니메이션을 부여합니다!
-            if(habit.id === clickedHabitId && date === clickedDate) {
-                plant.classList.add("animate");
+            if(habit.history[date]){
+                cell.classList.add("completed");
+                const level = getPlantLevel(habit.history, date);
+                const plant = document.createElement("div");
+                plant.className = `sprout-emoji level${level}`;
+                cell.appendChild(plant);
             }
             
-            if(plant) cell.appendChild(plant);
-        }
-        
-        cell.title=date;
-        cell.addEventListener("click", ()=>toggleDay(habit.id, date));
-        grid.appendChild(cell);
+            cell.title=date;
+            cell.addEventListener("click", ()=>toggleDay(habit.id, date));
+            grid.appendChild(cell);
+        });
+
+        habitList.appendChild(card);
     });
 }
 
@@ -439,6 +461,7 @@ function escapeHTML(str){
 // ==================================================
 // Theme Management
 // ==================================================
+const themeSelect = document.getElementById("theme-select");
 themeSelect.addEventListener("change", ()=>{
     const theme = themeSelect.value;
     document.documentElement.setAttribute("data-theme", theme);
@@ -474,7 +497,7 @@ function importData(event){
             if(Array.isArray(data)){
                 habits=data;
                 saveData();
-                render();
+                renderFull();
                 alert("복원이 완료되었습니다.");
             }
         }catch(error){
@@ -490,7 +513,7 @@ function importData(event){
 function init(){
     document.getElementById("today-text").textContent = `오늘은 ${getKSTDate()} 입니다. 나만의 정원을 키워보세요 🌱`;
     loadTheme();
-    render(); // 초기 로딩 시에는 애니메이션 없이 조용히 렌더링
+    renderFull(); 
 }
 
 init();
