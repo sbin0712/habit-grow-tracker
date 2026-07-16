@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HabitGrow v4 - 완벽한 개별 애니메이션 트래커</title>
+<title>HabitGrow v4.1 - 완벽한 개별 애니메이션 & 통계 트래커</title>
 <style>
 /* ==================================================
    Growing Grass System
@@ -38,7 +38,7 @@
     z-index: 5;
     pointer-events: none;
     filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3));
-    transition: all 0.3s ease; /* 레벨업 할 때 부드럽게 변하도록 */
+    transition: all 0.3s ease;
 }
 
 /* 🎯 방금 클릭한 칸에만 적용될 팝(Pop) 애니메이션 */
@@ -53,7 +53,7 @@
 }
 
 /* ==================================================
-   Plant Levels (빠른 확인을 위해 허들 낮춤!)
+   Plant Levels
    1일: 새싹 (🌱)
    2일: 잔디 (🌿)
    3~4일: 나무 (🌳)
@@ -220,7 +220,7 @@ function getLast30Days(){
     for(let i=29; i>=0; i--){
         result.push(addDays(today, -i));
     }
-    return result; // [29일전, 28일전, ..., 어제, 오늘] 순서
+    return result; 
 }
 
 // ==================================================
@@ -252,9 +252,16 @@ function calculateBestStreak(history){
 }
 
 function calculateSuccessRate(history){
-    const completed = getCompletedCount(history);
-    if(Object.keys(history).length===0) return 0;
-    return Math.round(completed / Object.keys(history).length * 100);
+    // [버그 수정] 최근 30일을 기준으로 몇 번 달성했는지 정확히 계산합니다.
+    const dates = getLast30Days();
+    let completedIn30Days = 0;
+    
+    dates.forEach(date => {
+        if(history[date]) completedIn30Days++;
+    });
+    
+    // 30칸 중 달성한 비율 계산 (예: 3칸이면 10%)
+    return Math.round((completedIn30Days / 30) * 100);
 }
 
 // ==================================================
@@ -263,7 +270,6 @@ function calculateSuccessRate(history){
 function getStreakAtDate(history, dateStr) {
     let streak = 0;
     let current = dateStr;
-    // 클릭한 날짜부터 과거로 며칠이나 연속으로 했는지 체크합니다.
     while(history[current]) {
         streak++;
         current = addDays(current, -1);
@@ -273,11 +279,11 @@ function getStreakAtDate(history, dateStr) {
 
 function getPlantLevel(history, dateStr){
     const streak = getStreakAtDate(history, dateStr);
-    if(streak >= 7) return 5; // 7일 연속 = 야자수🌴
-    if(streak >= 5) return 4; // 5일 연속 = 소나무🌲
-    if(streak >= 3) return 3; // 3일 연속 = 나무🌳
-    if(streak >= 2) return 2; // 2일 연속 = 잔디🌿
-    return 1;                 // 1일 (첫 체크) = 새싹🌱
+    if(streak >= 7) return 5;
+    if(streak >= 5) return 4;
+    if(streak >= 3) return 3;
+    if(streak >= 2) return 2;
+    return 1;
 }
 
 // ==================================================
@@ -300,32 +306,28 @@ function addHabit(){
     habits.unshift(createHabit(title));
     saveData();
     habitInput.value="";
-    renderFull(); // 새 습관 추가시에만 전체 렌더링
+    renderFull(); 
 }
 
 // ==================================================
-// Toggle Day (핵심: 전체 리렌더링 제거, 핀셋 업데이트)
+// Toggle Day
 // ==================================================
 function toggleDay(habitId, date){
     const habit = habits.find(h=>h.id===habitId);
     if(!habit) return;
     
-    // 데이터 토글
     if(habit.history[date]){ delete habit.history[date]; }
     else{ habit.history[date]=true; }
     saveData();
     
-    // 화면 전체를 다시 그리지 않고, 해당 습관 카드만 조심스럽게 업데이트합니다.
     updateHabitCard(habitId, date);
 }
 
-// 딱 필요한 부분(클릭된 습관의 통계 및 잔디)만 갱신하는 함수
 function updateHabitCard(habitId, clickedDate) {
     const habit = habits.find(h => h.id === habitId);
     const card = document.querySelector(`.habit-card[data-id="${habitId}"]`);
     if(!card) return;
 
-    // 1. 통계 텍스트 업데이트
     const current = calculateCurrentStreak(habit.history);
     const best = calculateBestStreak(habit.history);
     const total = getCompletedCount(habit.history);
@@ -336,7 +338,6 @@ function updateHabitCard(habitId, clickedDate) {
     card.querySelector('.stat-total').innerText = `🌱 총 ${total}회`;
     card.querySelector('.stat-rate').innerText = `📈 달성률 ${rate}%`;
 
-    // 2. 잔디(그리드) 개별 칸 업데이트
     const cells = card.querySelectorAll('.day-cell');
     cells.forEach(cell => {
         const date = cell.getAttribute('data-date');
@@ -349,20 +350,16 @@ function updateHabitCard(habitId, clickedDate) {
             const targetClassName = `sprout-emoji level${level}`;
 
             if (existingPlant) {
-                // 이미 식물이 있는데 레벨이 변했다면 클래스만 변경 (부드럽게 바뀜)
                 existingPlant.className = targetClassName;
             } else {
-                // 식물이 없었다면 새로 생성해서 꽂아줌
                 const plant = document.createElement('div');
                 plant.className = targetClassName;
-                // 방금 클릭한 그 칸에만 팝(Pop) 애니메이션 부여!
                 if (date === clickedDate) {
                     plant.classList.add('animate-pop');
                 }
                 cell.appendChild(plant);
             }
         } else {
-            // 체크 해제된 칸 처리
             cell.classList.remove('completed');
             if (existingPlant) {
                 existingPlant.remove();
@@ -392,7 +389,7 @@ function closeModal(){
 }
 
 // ==================================================
-// Full Render (초기 로딩 시 1회만 실행됨)
+// Full Render
 // ==================================================
 function renderFull(){
     habitList.innerHTML="";
@@ -406,7 +403,7 @@ function renderFull(){
     habits.forEach(habit=>{
         const card = document.createElement("div");
         card.className="habit-card";
-        card.setAttribute("data-id", habit.id); // 업데이트를 위해 ID 부여
+        card.setAttribute("data-id", habit.id); 
         
         const current = calculateCurrentStreak(habit.history);
         const best = calculateBestStreak(habit.history);
@@ -431,7 +428,6 @@ function renderFull(){
 
         const grid = card.querySelector(".grass-grid");
         
-        // 30일치 칸 생성 (초기 렌더링 시에는 애니메이션 없음)
         dates.forEach(date=>{
             const cell = document.createElement("div");
             cell.className="day-cell";
