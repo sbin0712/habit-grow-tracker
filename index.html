@@ -1435,37 +1435,19 @@ function getPlantLevel(history){
 
 function createPlant(history){
 
-
-
     const level =
     getPlantLevel(history);
 
 
-
-    if(level===0){
-
-        level = 1;
-
-    }
-
-
-
     const plant =
-    document.createElement(
-        "div"
-    );
-
+    document.createElement("div");
 
 
     plant.className =
-    "plant level"
-    +
-    level;
-
+    "plant level" + level;
 
 
     return plant;
-
 
 }
 
@@ -2263,7 +2245,49 @@ function init(){
 
 init();
 
+.plant {
 
+    position:absolute;
+
+    inset:0;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    font-size:22px;
+
+    animation:
+    growPlant .4s ease;
+
+}
+
+
+.plant.level1::before {
+    content:"🌱";
+}
+
+
+.plant.level2::before {
+    content:"🌿";
+}
+
+
+.plant.level3::before {
+    content:"🌳";
+}
+
+
+.plant.level4::before {
+    content:"🌲";
+}
+
+
+.plant.level5::before {
+    content:"🌴";
+}
 
 
 
